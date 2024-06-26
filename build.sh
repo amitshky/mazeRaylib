@@ -7,31 +7,36 @@ BUILD_DIR="build"
 
 # check if build/ directory exists and create build/ if it doesn't
 if [ ! -d ./build/ ]; then
-	mkdir build/
+    mkdir build/
 fi
 
 EXEC_FILE=$BUILD_DIR"/main"
 
 SRC_FILES="\
-	src/main.c \
+    src/main.c \
+    src/application.c \
+    src/camera.c \
 "
 
 INCLUDE_DIR="\
-	./ext/raylib/src/ \
+    -I ext/raylib/src/ \
+    -I src/ \
 "
 
 LINK_DIR="\
-	./ext/raylib/build/raylib/ \
+    -L ext/raylib/build/raylib/ \
 "
 
 LINK_LIB="\
-	-lc \
-	-lm \
-	-lraylib \
+    -lc \
+    -lm \
+    -lraylib \
 "
+
+WARNING_FLAGS="-Wall -Wextra"
 
 echo "Compiling..."
 
-gcc $SRC_FILES -o build/main -I$INCLUDE_DIR -L$LINK_DIR $LINK_LIB -Wall -Wextra -std=c17
+gcc $SRC_FILES -o build/main $INCLUDE_DIR $LINK_DIR $LINK_LIB $WARNING_FLAGS -std=c17 -O0 -g
 
 echo "Compiled to "$EXEC_FILE 

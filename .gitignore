@@ -54,3 +54,4 @@ dkms.conf
 
 # project specific gitignore
 build/
+core
