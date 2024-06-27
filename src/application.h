@@ -4,15 +4,15 @@
 
 typedef struct Application {
     // public methods
-    void (*Init)(struct Application* const);
-    void (*Cleanup)(struct Application* const);
+    void (*Init)(struct Application* const self, const char* path);
+    void (*Cleanup)(struct Application* const self);
 
-    void (*OnUpdate)(struct Application* const);
+    void (*OnUpdate)(struct Application* const self);
 
     // private variables
-    const char* mapLayout;
+    char* mapLayout; // read from file in Init()
 } Application;
 
-// void Init(Application* const self);
-// void Cleanup(Application* const self);
+void Init(Application* const self, const char* path);
+void Cleanup(Application* const self);
 void OnUpdate(Application* const self);

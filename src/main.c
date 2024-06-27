@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 #include "raylib.h"
 #include "application.h"
 #include "camera.h"
@@ -6,14 +8,15 @@
 void UIDrawGuides();
 
 int main(void) {
-    InitWindow(640, 640, "Cube");
+    InitWindow(640, 640, "Maze");
+    SetTargetFPS(60);
 
     Application app = {
-        // .Init = Init,
-        // .Cleanup = Cleanup,
+        .Init = Init,
+        .Cleanup = Cleanup,
         .OnUpdate = OnUpdate,
-        .mapLayout = "###   #\n# #",
     };
+    app.Init(&app, "assets/map/map1.txt");
 
     Camera3D playerCamera = {
         .position = { 100.0f, 100.0f, 200.0f },
@@ -23,7 +26,6 @@ int main(void) {
         .projection = CAMERA_PERSPECTIVE,
     };
 
-    SetTargetFPS(60);
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BLACK);
@@ -35,10 +37,12 @@ int main(void) {
 
         EndMode3D();
 
+        DrawFPS(10, 10);
         EndDrawing();
         CameraController(&playerCamera);
     }
 
+    app.Cleanup(&app);
     CloseWindow();
     return 0;
 }
