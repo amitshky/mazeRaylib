@@ -19,7 +19,7 @@ int main(void) {
     app.Init(&app, "assets/map/map1.txt");
 
     Camera3D playerCamera = {
-        .position = { 100.0f, 100.0f, 200.0f },
+        .position = app.playerPosition,
         .target = { 0.0f, 0.0f, 0.0f },
         .up = { 0.0f, 1.0f, 0.0f },
         .fovy = 45.0f,

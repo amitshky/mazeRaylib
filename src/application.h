@@ -3,14 +3,14 @@
 #include "raylib.h"
 
 typedef struct Application {
-    // public methods
+    // methods
     void (*Init)(struct Application* const self, const char* path);
     void (*Cleanup)(struct Application* const self);
-
     void (*OnUpdate)(struct Application* const self);
 
-    // private variables
+    // variables
     char* mapLayout; // read from file in Init()
+    Vector3 playerPosition;
 } Application;
 
 void Init(Application* const self, const char* path);

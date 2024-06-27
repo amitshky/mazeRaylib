@@ -6,6 +6,8 @@
 #include "utils.h"
 
 void Init(Application* const self, const char* path) {
+    self->playerPosition = (Vector3){ 0.0f, 0.0f, 0.0f };
+
     FILE* fp = fopen(path, "r");
     if (fp == NULL)
     {
@@ -22,8 +24,22 @@ void Init(Application* const self, const char* path) {
     int ch;
     int i = 0;
 
+    // for player position
+    float x = 0.0f;
+    float z = 0.0f;
+
     while ((ch = fgetc(fp)) != EOF) {
         self->mapLayout[i++] = (char)ch;
+        if (ch == 'x') {
+            self->playerPosition.x = x;
+            self->playerPosition.z = z;
+        }
+
+        x += 10.0f;
+        if (ch == '\n') {
+            x = 10.0f;
+            z += 10.f;
+        }
     }
 
     if (fclose(fp) == EOF) {
@@ -46,7 +62,7 @@ void OnUpdate(Application* const self) {
         } else if (self->mapLayout[i] == '\n') {
             x = 0.0f;
             z += 10.0f;
-        } else if (self->mapLayout[i] == '.') {
+        } else if (self->mapLayout[i] == '.' || self->mapLayout[i] == 'x') {
             x += 10.0f;
         }
     }
