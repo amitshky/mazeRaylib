@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include "raylib.h"
 #include "application.h"
-#include "camera.h"
+// #include "camera.h"
 
 void UIDrawGuides();
 
@@ -15,22 +15,15 @@ int main(void) {
         .Init = Init,
         .Cleanup = Cleanup,
         .OnUpdate = OnUpdate,
+        .UpdatePlayerCamera = UpdatePlayerCamera,
     };
     app.Init(&app, "assets/map/map1.txt");
-
-    Camera3D playerCamera = {
-        .position = app.playerPosition,
-        .target = { 0.0f, 0.0f, 0.0f },
-        .up = { 0.0f, 1.0f, 0.0f },
-        .fovy = 45.0f,
-        .projection = CAMERA_PERSPECTIVE,
-    };
 
     while (!WindowShouldClose()) {
         BeginDrawing();
         ClearBackground(BLACK);
 
-        BeginMode3D(playerCamera);
+        BeginMode3D(app.playerCamera);
 
         UIDrawGuides();
         app.OnUpdate(&app);
@@ -39,7 +32,6 @@ int main(void) {
 
         DrawFPS(10, 10);
         EndDrawing();
-        CameraController(&playerCamera);
     }
 
     app.Cleanup(&app);
