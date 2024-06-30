@@ -14,6 +14,7 @@ int main(void) {
         .Init = Init,
         .Cleanup = Cleanup,
         .OnUpdate = OnUpdate,
+        .LoadMap = LoadMap,
         .CameraUpdate = CameraUpdate,
     };
     app.Init(&app, "assets/map/map1.txt");
