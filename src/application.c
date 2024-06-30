@@ -6,15 +6,10 @@
 #include "rcamera.h"
 #include "utils.h"
 
-void Init(Application* const self, const char* path) {
-    self->playerCamera = (Camera3D){
-        .position = { 0.0f, 0.0f, 0.0f },
-        .target = { 0.0f, 0.0f, 0.0f },
-        .up = { 0.0f, 1.0f, 0.0f },
-        .fovy = 45.0f,
-        .projection = CAMERA_PERSPECTIVE,
-    };
-
+/**
+ * loads map from file, allocates `mapLayout` so dont forget to free it
+ */
+void LoadMap(char** const mapLayout, const char* path, Player* const player) {
     FILE* fp = fopen(path, "r");
     if (fp == NULL)
     {
@@ -23,32 +18,42 @@ void Init(Application* const self, const char* path) {
     }
 
     fseek(fp, 0l, SEEK_END); // seek to the end of file
-    const uint64_t fileSize = ftell(fp);
+    const uint64_t fileSize = (const uint64_t)ftell(fp);
     fseek(fp, 0l, 0); // seek to the start of the file
 
-    self->mapLayout = (char*)malloc(fileSize + 1);
+    (*mapLayout) = (char*)malloc((fileSize + 1) * sizeof(char));
 
     int ch;
     int i = 0;
-
     // for player position
     float x = 0.0f;
     float z = 0.0f;
-
     while ((ch = fgetc(fp)) != EOF) {
-        self->mapLayout[i++] = (char)ch;
-        if (ch == 'x') {
-            self->playerCamera.position.x = x;
-            self->playerCamera.position.z = z;
-        }
+        (*mapLayout)[i++] = (char)ch;
 
-        x += 10.0f;
-        if (ch == '\n') {
+        if (ch == 'x') {
+            player->position.x = x;
+            player->position.z = z;
+        } else if (ch == '\n') {
             x = 10.0f;
             z += 10.f;
+        } else {
+            x += 10.0f;
         }
     }
-    self->mapLayout[fileSize] = '\0';
+    (*mapLayout)[fileSize] = '\0';
+    player->box = (BoundingBox){
+        (Vector3) {
+            player->position.x - player->size.x / 2.0f, 
+            player->position.y - player->size.y / 2.0f, 
+            player->position.z - player->size.z / 2.0f 
+        },
+        (Vector3) {
+            player->position.x + player->size.x / 2.0f, 
+            player->position.y + player->size.y / 2.0f, 
+            player->position.z + player->size.z / 2.0f 
+        }
+    };
 
     if (fclose(fp) == EOF) {
         printf("Error closing file: %s\n", path);
@@ -56,35 +61,129 @@ void Init(Application* const self, const char* path) {
     }
 }
 
-void Cleanup(Application* const self) {
-    free(self->mapLayout);
+void Init(Application* const self, const char* path) {
+    self->camera = (Camera3D){
+        .position = { 75.0f, 250.0f, 75.0f },
+        .target = { 0.0f, 0.0f, 0.0f },
+        .up = { 0.0f, 1.0f, 0.0f },
+        .fovy = 45.0f,
+        .projection = CAMERA_PERSPECTIVE,
+    };
+
+    self->player = (Player){
+        .position = { 0.0f, 0.0f, 0.0f },
+        .size = { 8.0f, 8.0f, 8.0f },
+        .color = RED,
+        .box = {
+            (Vector3){ 0.0f, 0.0f, 0.0f },
+            (Vector3){ 0.0f, 0.0f, 0.0f }
+        },
+    };
+
+    self->mapLayout = NULL;
+    LoadMap(&self->mapLayout, path, &self->player);
 }
 
-void OnUpdate(Application* const self) {
-    self->UpdatePlayerCamera(self);
+void Cleanup(Application* const self) {
+    free(self->mapLayout);
+    self->mapLayout = NULL;
+}
+
+void MovePlayer(Player* const player) {
+    const float speed = 60.0f * GetFrameTime();
+    if (IsKeyDown(KEY_LEFT)) {
+        player->position.x -= speed;
+    } else if (IsKeyDown(KEY_RIGHT)) {
+        player->position.x += speed;
+    }
+
+    if (IsKeyDown(KEY_UP)) {
+        player->position.z -= speed;
+    } else if (IsKeyDown(KEY_DOWN)) {
+        player->position.z += speed;
+    }
+
+    player->box = (BoundingBox){
+        (Vector3) {
+            player->position.x - player->size.x / 2.0f, 
+            player->position.y - player->size.y / 2.0f, 
+            player->position.z - player->size.z / 2.0f 
+        },
+        (Vector3) {
+            player->position.x + player->size.x / 2.0f, 
+            player->position.y + player->size.y / 2.0f, 
+            player->position.z + player->size.z / 2.0f 
+        }
+    };
+}
+
+void DrawMaze(char** const mapLayout, Wall* const wall, Player* const player, bool* const collision) {
+    if ((*mapLayout) == NULL) {
+        printf("Map has not been loaded!\n");
+        return;
+    }
+
     float x = 0.0f;
     float z = 0.0f;
-
-    Vector3 wallPos  = { 0.0f, 0.0f, 0.0f };
-    Vector3 wallSize = { 10.0f, 10.0f, 10.0f };
-    Color wallColor  = { 193, 116, 93, 255 };
-
-    for (uint64_t i = 0; i < strlen(self->mapLayout); ++i) {
-        if (self->mapLayout[i] == '#') {
-            wallPos.x = x;
-            wallPos.z = z;
-            DrawCubeV(wallPos, wallSize, wallColor);
+    const size_t mapSize = strlen(*mapLayout);
+    for (uint64_t i = 0; i < mapSize; ++i) {
+        if ((*mapLayout)[i] == '#') {
+            wall->position.x = x;
+            wall->position.z = z;
             x += 10.0f;
-        } else if (self->mapLayout[i] == '\n') {
+            DrawCubeV(wall->position, wall->size, wall->color);
+
+            wall->box = (BoundingBox){
+                (Vector3) {
+                    wall->position.x - wall->size.x / 2.0f, 
+                    wall->position.y - wall->size.y / 2.0f, 
+                    wall->position.z - wall->size.z / 2.0f 
+                },
+                (Vector3) {
+                    wall->position.x + wall->size.x / 2.0f, 
+                    wall->position.y + wall->size.y / 2.0f, 
+                    wall->position.z + wall->size.z / 2.0f 
+                }
+            };
+
+            if (CheckCollisionBoxes(wall->box, player->box) && !(*collision)) {
+                (*collision) = true;
+            }
+
+        } else if ((*mapLayout)[i] == '\n') {
             x = 0.0f;
             z += 10.0f;
-        } else if (self->mapLayout[i] == '.' || self->mapLayout[i] == 'x') {
+        } else if ((*mapLayout)[i] == '.' || (*mapLayout)[i] == 'x') {
             x += 10.0f;
         }
     }
 }
 
-void UpdatePlayerCamera(Application* const self) {
+void OnUpdate(Application* const self) {
+    self->CameraUpdate(self);
+    Wall wall = {
+        .position  = { 0.0f, 0.0f, 0.0f },
+        .size = { 10.0f, 10.0f, 10.0f },
+        .color  = { 0xbd, 0x78, 0xc9, 0xff },
+        .box = {
+            (Vector3){ 0.0f, 0.0f, 0.0f },
+            (Vector3){ 0.0f, 0.0f, 0.0f }
+        },
+    };
+
+    MovePlayer(&self->player);
+    DrawCubeV(self->player.position, self->player.size, self->player.color);
+    bool collision = false;
+    DrawMaze(&self->mapLayout, &wall, &self->player, &collision);
+    if (collision) {
+        self->player.color = BLUE;
+        collision = false;
+    } else {
+        self->player.color = RED;
+    }
+}
+
+void CameraUpdate(Application* const self) {
     // press and hold the left mouse button to move the camera
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
         HideCursor();
@@ -101,26 +200,26 @@ void UpdatePlayerCamera(Application* const self) {
     const float distance = 90.0f * GetFrameTime();
 
     if (IsKeyDown(KEY_A)) { // left
-        CameraMoveRight(&self->playerCamera, -distance, true);
+        CameraMoveRight(&self->camera, -distance, true);
     } else if (IsKeyDown(KEY_D)) { // right
-        CameraMoveRight(&self->playerCamera, distance, true);
+        CameraMoveRight(&self->camera, distance, true);
     }
 
     if (IsKeyDown(KEY_W)) { // front
-        CameraMoveForward(&self->playerCamera, distance, true);
+        CameraMoveForward(&self->camera, distance, true);
     } else if (IsKeyDown(KEY_S)) { // back
-        CameraMoveForward(&self->playerCamera, -distance, true);
+        CameraMoveForward(&self->camera, -distance, true);
     }
 
     if (IsKeyDown(KEY_E)) { // up
-        CameraMoveUp(&self->playerCamera, distance);
+        CameraMoveUp(&self->camera, distance);
     } else if (IsKeyDown(KEY_Q)) { // back
-        CameraMoveUp(&self->playerCamera, -distance);
+        CameraMoveUp(&self->camera, -distance);
     }
 
     // move the mouse to look up/down/left/right
     const Vector2 delta = GetMouseDelta();
     const float sensitivity = 0.01f * GetFrameTime();
-    CameraPitch(&self->playerCamera, -delta.y * sensitivity, true, false, false);
-    CameraYaw(&self->playerCamera, -delta.x * sensitivity, false);
+    CameraPitch(&self->camera, -delta.y * sensitivity, true, false, false);
+    CameraYaw(&self->camera, -delta.x * sensitivity, false);
 }

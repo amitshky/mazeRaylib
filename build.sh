@@ -33,10 +33,10 @@ LINK_LIB="\
     -lraylib \
 "
 
-WARNING_FLAGS="-Wall -Wextra"
+WARNING_FLAGS="-Wall -Wextra -Wconversion -Werror"
 
 echo "Compiling..."
 
-gcc $SRC_FILES -o build/main $INCLUDE_DIR $LINK_DIR $LINK_LIB $WARNING_FLAGS -std=c17 -O0 -g
+gcc $SRC_FILES -o $EXEC_FILE $INCLUDE_DIR $LINK_DIR $LINK_LIB $WARNING_FLAGS -std=c17 -O0 -g
 
 echo "Compiled to "$EXEC_FILE 

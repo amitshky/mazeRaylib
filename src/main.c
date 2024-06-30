@@ -3,7 +3,6 @@
 #include <stdint.h>
 #include "raylib.h"
 #include "application.h"
-// #include "camera.h"
 
 void UIDrawGuides();
 
@@ -15,7 +14,7 @@ int main(void) {
         .Init = Init,
         .Cleanup = Cleanup,
         .OnUpdate = OnUpdate,
-        .UpdatePlayerCamera = UpdatePlayerCamera,
+        .CameraUpdate = CameraUpdate,
     };
     app.Init(&app, "assets/map/map1.txt");
 
@@ -23,7 +22,7 @@ int main(void) {
         BeginDrawing();
         ClearBackground(BLACK);
 
-        BeginMode3D(app.playerCamera);
+        BeginMode3D(app.camera);
 
         UIDrawGuides();
         app.OnUpdate(&app);
