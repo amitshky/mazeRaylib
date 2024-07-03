@@ -82,26 +82,22 @@ void GetCollisionDirection(Player* const player, Wall* const wall) {
         player->color = WHITE;
 
         // front
-        if ((player->box.min.x < wall->box.max.x && player->box.max.x > wall->box.min.x) && 
-            player->box.min.z > wall->position.z) {
+        if (player->box.min.z > wall->position.z) {
             player->color = GREEN;
             player->frontCollision = true;
         }
         // back
-        else if ((player->box.min.x < wall->box.max.x && player->box.max.x > wall->box.min.x) && 
-            player->box.max.z < wall->position.z) {
+        else if (player->box.max.z < wall->position.z) {
             player->color = ORANGE;
             player->backCollision = true;
         }
         // left
-        else if ((player->box.min.z < wall->box.max.z && player->box.max.z > wall->box.min.z) && 
-            player->box.min.x > wall->position.x) {
+        else if (player->box.min.x > wall->position.x) {
             player->color = BLUE;
             player->leftCollision = true;
         }
         // right
-        else if ((player->box.min.z < wall->box.max.z && player->box.max.z > wall->box.min.z) && 
-            player->box.max.x < wall->position.x) {
+        else if (player->box.max.x < wall->position.x) {
             player->color = PURPLE;
             player->rightCollision = true;
         }
