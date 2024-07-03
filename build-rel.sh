@@ -3,11 +3,15 @@
 # exit immediately if a command exits with a non-zero status
 set -e
 
-BUILD_DIR="build"
+BUILD_DIR="build/rel"
 
 # check if build/ directory exists and create build/ if it doesn't
 if [ ! -d ./build/ ]; then
     mkdir build/
+fi
+
+if [ ! -d ./build/rel/ ]; then
+    mkdir build/rel/
 fi
 
 EXEC_FILE=$BUILD_DIR"/main"
@@ -34,10 +38,11 @@ LINK_LIB="\
 "
 
 WARNING_FLAGS="-Wall -Wextra -Wconversion -Werror"
-CFLAGS="-std=c17 -O0 -ggdb -fsanitize=address -fno-omit-frame-pointer"
+CFLAGS="-std=c17 -O3"
 
 echo "Compiling..."
 
 gcc $SRC_FILES -o $EXEC_FILE $INCLUDE_DIR $LINK_DIR $LINK_LIB $WARNING_FLAGS $CFLAGS
 
 echo "Compiled to "$EXEC_FILE 
+

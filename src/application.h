@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <stdbool.h>
 #include "raylib.h"
 
 typedef struct Player {
@@ -8,6 +9,10 @@ typedef struct Player {
     Vector3 size;
     Color color;
     BoundingBox box;
+    bool leftCollision;
+    bool rightCollision;
+    bool frontCollision;
+    bool backCollision;
 } Player;
 
 typedef struct Wall {
@@ -24,7 +29,7 @@ typedef struct Application {
     void (*OnUpdate)(struct Application* const this);
 
     void (*LoadMap)(struct Application* const this, const char* path);
-    void (*CameraUpdate)(struct Application* const this);
+    void (*ControlCamera)(struct Application* const this);
 
     // variables
     Camera3D camera;
@@ -39,4 +44,4 @@ void Cleanup(Application* const this);
 void OnUpdate(Application* const this);
 
 void LoadMap(Application* const this, const char* path);
-void CameraUpdate(Application* const this);
+void ControlCamera(Application* const this);

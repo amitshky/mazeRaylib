@@ -15,9 +15,9 @@ int main(void) {
         .Cleanup = Cleanup,
         .OnUpdate = OnUpdate,
         .LoadMap = LoadMap,
-        .CameraUpdate = CameraUpdate,
+        .ControlCamera = ControlCamera,
     };
-    app.Init(&app, "assets/map/map1.txt");
+    app.Init(&app, "assets/map/map2.txt");
 
     while (!WindowShouldClose()) {
         BeginDrawing();
@@ -41,7 +41,8 @@ int main(void) {
 
 
 void UIDrawGuides() {
-    DrawLine3D((Vector3){ 0.0f, -1000.0f, 0.0f }, (Vector3){ 0.0f, 1000.0f, 0.0f }, GREEN);
-    DrawLine3D((Vector3){ -1000.0f, 0.0f, 0.0f }, (Vector3){ 1000.0f, 0.0f, 0.0f }, RED);
-    DrawLine3D((Vector3){ 0.0f, 0.0f, -1000.0f }, (Vector3){ 0.0f, 0.0f, 1000.0f }, BLUE);
+    const float bounds = 1000.0f;
+    DrawLine3D((Vector3){ 0.0f, -bounds, 0.0f }, (Vector3){ 0.0f, bounds, 0.0f }, GREEN);
+    DrawLine3D((Vector3){ -bounds, 0.0f, 0.0f }, (Vector3){ bounds, 0.0f, 0.0f }, RED);
+    DrawLine3D((Vector3){ 0.0f, 0.0f, -bounds }, (Vector3){ 0.0f, 0.0f, bounds }, BLUE);
 }
