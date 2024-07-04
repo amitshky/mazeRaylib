@@ -17,7 +17,7 @@ int main(void) {
         .LoadMap = LoadMap,
         .ControlCamera = ControlCamera,
     };
-    app.Init(&app, "assets/map/map2.txt");
+    app.Init(&app, "assets/map/map1.txt");
 
     while (!WindowShouldClose()) {
         BeginDrawing();

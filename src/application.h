@@ -9,6 +9,7 @@ typedef struct Player {
     Vector3 size;
     Color color;
     BoundingBox box;
+    bool collision;
     bool leftCollision;
     bool rightCollision;
     bool frontCollision;

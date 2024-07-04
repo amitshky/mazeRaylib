@@ -11,16 +11,16 @@
 
 void Init(Application* const this, const char* path) {
     this->camera  = (Camera3D) {
-        .position = {  0.0f,  80.0f,  0.0f },
-        .target   = {  0.0f,   0.0f, -0.2f },
-        .up       = {  0.0f,   1.0f,  0.0f },
+        .position = { 75.0f,  200.0f, 69.0f },
+        .target   = { 75.0f,    0.0f, 68.0f },
+        .up       = {  0.0f,    1.0f,   0.0f },
         .fovy     = 45.0f,
         .projection = CAMERA_PERSPECTIVE,
     };
 
     this->player = (Player) {
         .position = { 0.0f, 0.0f, 0.0f },
-        .size = { 8.0f, 8.0f, 8.0f },
+        .size = { 4.0f, 10.0f, 4.0f },
         .color = RED,
         .box = {
             (Vector3) { 0.0f, 0.0f, 0.0f },
@@ -60,16 +60,16 @@ void MovePlayer(Player* const player) {
         player->position.z += speed;
     }
 
-    const float padding = 1.0f;
+    const float padding = 0.5f;
     player->box = (BoundingBox){
         (Vector3) {
             player->position.x - player->size.x / 2.0f - padding,
-            player->position.y - player->size.y / 2.0f - padding,
+            player->position.y - player->size.y / 2.0f,
             player->position.z - player->size.z / 2.0f - padding
         },
         (Vector3) {
             player->position.x + player->size.x / 2.0f + padding,
-            player->position.y + player->size.y / 2.0f + padding,
+            player->position.y + player->size.y / 2.0f,
             player->position.z + player->size.z / 2.0f + padding
         }
     };
@@ -78,16 +78,20 @@ void MovePlayer(Player* const player) {
 void GetCollisionDirection(Player* const player, Wall* const wall) {
     // there is a collision
     if ((player->box.min.x <= wall->box.max.x && player->box.max.x >= wall->box.min.x) && 
-        (player->box.min.z <= wall->box.max.z && player->box.max.z >= wall->box.min.z)) {
+            (player->box.min.z <= wall->box.max.z && player->box.max.z >= wall->box.min.z)) {
         player->color = WHITE;
-
+        player->collision = true;
         // front
-        if (player->box.min.z > wall->position.z) {
+        if (player->box.min.z > wall->position.z 
+                && !(player->box.min.x > wall->position.x) 
+                && !(player->box.max.x < wall->position.x)) {
             player->color = GREEN;
             player->frontCollision = true;
         }
         // back
-        else if (player->box.max.z < wall->position.z) {
+        else if (player->box.max.z < wall->position.z
+                && !(player->box.min.x > wall->position.x) 
+                && !(player->box.max.x < wall->position.x)) {
             player->color = ORANGE;
             player->backCollision = true;
         }
@@ -110,35 +114,21 @@ void OnUpdate(Application* const this) {
     MovePlayer(&this->player);
     DrawCubeV(this->player.position, this->player.size, this->player.color);
 
-    bool collision = false;
+    if (this->player.collision) {
+        this->player.color = RED;
+        this->player.collision = false;
+        this->player.frontCollision = false;
+        this->player.backCollision = false;
+        this->player.leftCollision = false;
+        this->player.rightCollision = false;
+    }
+
     for (uint64_t i = 0; i < this->wallsNum; ++i) {
         DrawCubeV(this->walls[i].position, this->walls[i].size, this->walls[i].color);
         DrawBoundingBox(this->player.box, GREEN);
         DrawBoundingBox(this->walls[i].box, BLUE);
 
-        if (CheckCollisionBoxes(this->walls[i].box, this->player.box)) {
-            collision = true;
-        }
         GetCollisionDirection(&this->player, &this->walls[i]);
-    }
-
-    // printf("collision: %s, front: %s, back: %s, left: %s, right: %s\n",
-    //     collision ? "true " : "false",
-    //     this->player.frontCollision ? "true " : "false",
-    //     this->player.backCollision  ? "true " : "false",
-    //     this->player.leftCollision  ? "true " : "false",
-    //     this->player.rightCollision ? "true " : "false"
-    // );
-
-    if (collision) {
-        // this->player.color = BLUE;
-        collision = false;
-    } else {
-        this->player.color = RED;
-        this->player.leftCollision = false;
-        this->player.rightCollision = false;
-        this->player.frontCollision = false;
-        this->player.backCollision = false;
     }
 }
 
