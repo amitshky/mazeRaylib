@@ -2,4 +2,5 @@
 
 #include "raylib.h"
 
-void CameraController(Camera3D* const camera);
+void CameraPan(Camera3D* const camera);
+void CameraOrbit(Camera3D* const camera);

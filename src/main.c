@@ -17,7 +17,7 @@ int main(void) {
         BeginDrawing();
         ClearBackground(BLACK);
 
-        BeginMode3D(app.camera);
+        BeginMode3D(*app.camera);
 
         UIDrawGuides();
         app.OnUpdate(&app);

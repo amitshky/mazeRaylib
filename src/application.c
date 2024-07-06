@@ -1,32 +1,18 @@
 #include "application.h"
+
 #include <stdio.h>
-#include <stdbool.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "rcamera.h"
 #include "raymath.h"
+
+#include "camera.h"
 #include "utils.h"
 
 
-BoundingBox CreateHitbox(const Vector3 position, const Vector3 size, const Vector3 padding) {
-    return (BoundingBox) {
-        (Vector3) {
-            position.x - size.x / 2.0f - padding.x,
-            position.y - size.y / 2.0f - padding.y,
-            position.z - size.z / 2.0f - padding.z
-        },
-        (Vector3) {
-            position.x + size.x / 2.0f + padding.x,
-            position.y + size.y / 2.0f + padding.y,
-            position.z + size.z / 2.0f + padding.z
-        }
-    };
-}
-
 void Init(Application* const this, const char* path) {
-    this->camera = (Camera3D) {
+    this->sceneCamera = (Camera3D) {
         .position = { 75.0f,  200.0f, 76.5f },
         .target   = { 75.0f,    0.0f, 75.5f },
         .up       = {  0.0f,    1.0f,  0.0f },
@@ -38,8 +24,18 @@ void Init(Application* const this, const char* path) {
         .position = { 0.0f, 0.0f, 0.0f },
         .size = { 4.0f, 10.0f, 4.0f },
         .color = RED,
+        .hitboxPadding = { 0.5f, 0.0f, 0.5f },
     };
-    this->player.hitbox = CreateHitbox(this->player.position, this->player.size, (Vector3) { 0.5f, 0.0f, 0.5f }),
+    this->player.camera = (Camera3D) {
+        .position = this->player.position,
+        .target = { 0.0f, 0.0f, 0.0f },
+        .up = { 0.0f, 1.0f, 0.0f },
+        .fovy = 45.0f,
+        .projection = CAMERA_PERSPECTIVE,
+    };
+    this->player.hitbox = CreateHitbox(this->player.position, this->player.size, this->player.hitboxPadding);
+
+    this->camera = &this->player.camera;
 
     this->mapLayout = NULL;
     this->walls = NULL;
@@ -56,29 +52,13 @@ void Cleanup(Application* const this) {
     this->wallsNum = 0;
 }
 
-void MovePlayer(Player* const player) {
-    float speed = 40.0f * GetFrameTime();
-    if (IsKeyDown(KEY_LEFT_SHIFT)) {
-        speed *= 0.1f;
-    }
-
-    if (IsKeyDown(KEY_LEFT)) {
-        player->position.x -= speed;
-    } else if (IsKeyDown(KEY_RIGHT)) {
-        player->position.x += speed;
-    }
-
-    if (IsKeyDown(KEY_UP)) {
-        player->position.z -= speed;
-    } else if (IsKeyDown(KEY_DOWN)) {
-        player->position.z += speed;
-    }
-
-    player->hitbox = CreateHitbox(player->position, player->size, (Vector3) { 0.5f, 0.0f, 0.5f });
-}
-
 void OnUpdate(Application* const this) {
-    this->ControlCamera(this);
+    if (IsKeyPressed(KEY_ONE)) {
+        this->camera = &this->player.camera;
+    } else if (IsKeyPressed(KEY_TWO)) {
+        this->camera = &this->sceneCamera;
+    }
+    this->ControlCamera(this->camera);
 
     Vector3 prevPlayerPosition = this->player.position;
     MovePlayer(&this->player);
@@ -92,7 +72,7 @@ void OnUpdate(Application* const this) {
         }
     }
 
-    DrawCubeV(this->player.position, this->player.size, this->player.color);
+    // DrawCubeV(this->player.position, this->player.size, this->player.color);
     DrawBoundingBox(this->player.hitbox, GREEN);
 }
 
@@ -162,53 +142,7 @@ void LoadMap(Application* const this, const char* path) {
     }
 }
 
-void CameraPan(Application* const app) {
-    // W, A, S, D, E, Q to move the camera's position
-    float speed = 90.0f;
-    if (IsKeyDown(KEY_LEFT_SHIFT)) {
-        speed *= 0.2f;
-    } else if (IsKeyDown(KEY_LEFT_CONTROL)) {
-        speed *= 5.0f;
-    }
-    speed *= GetFrameTime();
-
-    if (IsKeyDown(KEY_A)) { // left
-        CameraMoveRight(&app->camera, -speed, true);
-    } else if (IsKeyDown(KEY_D)) { // right
-        CameraMoveRight(&app->camera, speed, true);
-    }
-
-    if (IsKeyDown(KEY_W)) { // front
-        CameraMoveForward(&app->camera, speed, true);
-    } else if (IsKeyDown(KEY_S)) { // back
-        CameraMoveForward(&app->camera, -speed, true);
-    }
-
-    if (IsKeyDown(KEY_E)) { // up
-        CameraMoveUp(&app->camera, speed);
-    } else if (IsKeyDown(KEY_Q)) { // back
-        CameraMoveUp(&app->camera, -speed);
-    }
-
-    // move the mouse to look up/down/left/right
-    const Vector2 delta = GetMouseDelta();
-    const float sensitivity = 0.01f * GetFrameTime();
-    CameraPitch(&app->camera, -delta.y * sensitivity, true, false, false);
-    CameraYaw(&app->camera, -delta.x * sensitivity, false);
-}
-
-void CameraOrbit(Application* const app) {
-    const Vector2 delta = Vector2Normalize(GetMouseDelta());
-    const float speed = 5.0f * delta.x * GetFrameTime();
-
-    Matrix rotation = MatrixRotate(GetCameraUp(&app->camera), speed);
-
-    Vector3 view = Vector3Subtract(app->camera.position, app->camera.target);
-    view = Vector3Transform(view, rotation);
-    app->camera.position = Vector3Add(app->camera.target, view);
-}
-
-void ControlCamera(Application* const this) {
+void ControlCamera(Camera3D* const camera) {
     // press and hold the right mouse button or middle to move the camera
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) || IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) {
         HideCursor();
@@ -219,7 +153,7 @@ void ControlCamera(Application* const this) {
     }
 
     if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT))
-        CameraPan(this);
+        CameraPan(camera);
     else if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE))
-        CameraOrbit(this);
+        CameraOrbit(camera);
 }
