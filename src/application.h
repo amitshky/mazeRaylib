@@ -10,10 +10,6 @@ typedef struct Player {
     Color color;
     BoundingBox box;
     bool collision;
-    bool leftCollision;
-    bool rightCollision;
-    bool frontCollision;
-    bool backCollision;
 } Player;
 
 typedef struct Wall {
