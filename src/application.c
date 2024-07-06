@@ -13,27 +13,27 @@
 
 void Init(Application* const this, const char* path) {
     this->sceneCamera = (Camera3D) {
-        .position = { 75.0f,  200.0f, 76.5f },
-        .target   = { 75.0f,    0.0f, 75.5f },
-        .up       = {  0.0f,    1.0f,  0.0f },
+        .position = { 75.0f, 200.0f, 76.5f },
+        .target   = { 75.0f,   0.0f, 75.5f },
+        .up       = {  0.0f,   1.0f,  0.0f },
         .fovy     = 45.0f,
         .projection = CAMERA_PERSPECTIVE,
     };
 
     this->player = (Player) {
-        .position = { 0.0f, 0.0f, 0.0f },
         .size = { 4.0f, 10.0f, 4.0f },
         .color = RED,
+        .speed = 30.0f,
         .hitboxPadding = { 0.5f, 0.0f, 0.5f },
     };
     this->player.camera = (Camera3D) {
-        .position = this->player.position,
-        .target = { 0.0f, 0.0f, 0.0f },
-        .up = { 0.0f, 1.0f, 0.0f },
-        .fovy = 45.0f,
+        .position = { 0.0f, 0.0f, 0.0f },
+        .target   = { 0.0f, 0.0f, 0.0f },
+        .up       = { 0.0f, 1.0f, 0.0f },
+        .fovy     = 45.0f,
         .projection = CAMERA_PERSPECTIVE,
     };
-    this->player.hitbox = CreateHitbox(this->player.position, this->player.size, this->player.hitboxPadding);
+    this->player.hitbox = CreateHitbox(this->player.camera.position, this->player.size, this->player.hitboxPadding);
 
     this->camera = &this->player.camera;
 
@@ -58,21 +58,21 @@ void OnUpdate(Application* const this) {
     } else if (IsKeyPressed(KEY_TWO)) {
         this->camera = &this->sceneCamera;
     }
-    this->ControlCamera(this->camera);
 
-    Vector3 prevPlayerPosition = this->player.position;
-    MovePlayer(&this->player);
+    Vector3 prevPlayerPosition = this->player.camera.position;
+    this->ControlCamera(this->camera);
+    this->player.hitbox = CreateHitbox(this->player.camera.position, this->player.size, this->player.hitboxPadding);
 
     for (uint64_t i = 0; i < this->wallsNum; ++i) {
         DrawCubeV(this->walls[i].position, this->walls[i].size, this->walls[i].color);
         DrawBoundingBox(this->walls[i].hitbox, BLUE);
 
         if (CheckCollisionBoxes(this->player.hitbox, this->walls[i].hitbox)) {
-            this->player.position = prevPlayerPosition;
+            this->player.camera.position = prevPlayerPosition;
         }
     }
 
-    // DrawCubeV(this->player.position, this->player.size, this->player.color);
+    // DrawCubeV(this->player.camera.position, this->player.size, this->player.color);
     DrawBoundingBox(this->player.hitbox, GREEN);
 }
 
@@ -118,8 +118,8 @@ void LoadMap(Application* const this, const char* path) {
             x += 10.0f;
             ++wallIdx;
         } else if ((char)ch == 'x') {
-            this->player.position.x = x;
-            this->player.position.z = z;
+            this->player.camera.position.x = x;
+            this->player.camera.position.z = z;
             x += 10.0f;
         } else if ((char)ch == '\n') {
             x = 0.0f;
@@ -130,6 +130,9 @@ void LoadMap(Application* const this, const char* path) {
     }
     this->mapLayout[fileSize] = '\0';
     this->wallsNum = wallIdx;
+
+    this->player.camera.target = Vector3Add(this->player.camera.position, (Vector3) { 1.0f, 0.0f, 0.0f });
+    this->player.hitbox = CreateHitbox(this->player.camera.position, this->player.size, this->player.hitboxPadding);
 
     Wall* temp = (Wall*)malloc(this->wallsNum * sizeof(Wall));
     memcpy(temp, this->walls, this->wallsNum * sizeof(Wall));
