@@ -8,16 +8,17 @@ typedef struct Player {
     Vector3 position;
     Vector3 size;
     Color color;
-    BoundingBox box;
-    bool collision;
+    BoundingBox hitbox;
 } Player;
 
 typedef struct Wall {
     Vector3 position;
     Vector3 size;
     Color color;
-    BoundingBox box;
+    BoundingBox hitbox;
 } Wall;
+
+BoundingBox CreateHitbox(const Vector3 position, const Vector3 size, const Vector3 padding);
 
 typedef struct Application {
     // methods
@@ -31,9 +32,11 @@ typedef struct Application {
     // variables
     Camera3D camera;
     Player player;
-    char* mapLayout; // read from file in Init()
-    Wall* walls;
-    uint64_t wallsNum; // num of elements in walls
+
+    // initialized in `LoadMap` function
+    char* mapLayout;
+    Wall* walls; // list of all walls
+    uint64_t wallsNum; // number of walls
 } Application;
 
 void Init(Application* const this, const char* path);
@@ -42,3 +45,12 @@ void OnUpdate(Application* const this);
 
 void LoadMap(Application* const this, const char* path);
 void ControlCamera(Application* const this);
+
+#define CREATE_APPLICATION() (Application) { \
+    .Init = Init, \
+    .Cleanup = Cleanup, \
+    .OnUpdate = OnUpdate, \
+    .LoadMap = LoadMap, \
+    .ControlCamera = ControlCamera, \
+}
+

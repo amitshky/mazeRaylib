@@ -10,13 +10,7 @@ int main(void) {
     InitWindow(640, 640, "Maze");
     SetTargetFPS(60);
 
-    Application app = {
-        .Init = Init,
-        .Cleanup = Cleanup,
-        .OnUpdate = OnUpdate,
-        .LoadMap = LoadMap,
-        .ControlCamera = ControlCamera,
-    };
+    Application app = CREATE_APPLICATION();
     app.Init(&app, "assets/map/map1.txt");
 
     while (!WindowShouldClose()) {
@@ -38,7 +32,6 @@ int main(void) {
     CloseWindow();
     return 0;
 }
-
 
 void UIDrawGuides() {
     const float bounds = 1000.0f;

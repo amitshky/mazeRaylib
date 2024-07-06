@@ -9,8 +9,24 @@
 #include "raymath.h"
 #include "utils.h"
 
+
+BoundingBox CreateHitbox(const Vector3 position, const Vector3 size, const Vector3 padding) {
+    return (BoundingBox) {
+        (Vector3) {
+            position.x - size.x / 2.0f - padding.x,
+            position.y - size.y / 2.0f - padding.y,
+            position.z - size.z / 2.0f - padding.z
+        },
+        (Vector3) {
+            position.x + size.x / 2.0f + padding.x,
+            position.y + size.y / 2.0f + padding.y,
+            position.z + size.z / 2.0f + padding.z
+        }
+    };
+}
+
 void Init(Application* const this, const char* path) {
-    this->camera  = (Camera3D) {
+    this->camera = (Camera3D) {
         .position = { 75.0f,  200.0f, 76.5f },
         .target   = { 75.0f,    0.0f, 75.5f },
         .up       = {  0.0f,    1.0f,  0.0f },
@@ -22,11 +38,8 @@ void Init(Application* const this, const char* path) {
         .position = { 0.0f, 0.0f, 0.0f },
         .size = { 4.0f, 10.0f, 4.0f },
         .color = RED,
-        .box = {
-            (Vector3) { 0.0f, 0.0f, 0.0f },
-            (Vector3) { 0.0f, 0.0f, 0.0f }
-        },
     };
+    this->player.hitbox = CreateHitbox(this->player.position, this->player.size, (Vector3) { 0.5f, 0.0f, 0.5f }),
 
     this->mapLayout = NULL;
     this->walls = NULL;
@@ -37,6 +50,7 @@ void Init(Application* const this, const char* path) {
 void Cleanup(Application* const this) {
     free(this->mapLayout);
     this->mapLayout = NULL;
+
     free(this->walls);
     this->walls = NULL;
     this->wallsNum = 0;
@@ -60,38 +74,26 @@ void MovePlayer(Player* const player) {
         player->position.z += speed;
     }
 
-    const float padding = 1.0f;
-    player->box = (BoundingBox){
-        (Vector3) {
-            player->position.x - player->size.x / 2.0f - padding,
-            player->position.y - player->size.y / 2.0f,
-            player->position.z - player->size.z / 2.0f - padding
-        },
-        (Vector3) {
-            player->position.x + player->size.x / 2.0f + padding,
-            player->position.y + player->size.y / 2.0f,
-            player->position.z + player->size.z / 2.0f + padding
-        }
-    };
+    player->hitbox = CreateHitbox(player->position, player->size, (Vector3) { 0.5f, 0.0f, 0.5f });
 }
 
 void OnUpdate(Application* const this) {
     this->ControlCamera(this);
 
     Vector3 prevPlayerPosition = this->player.position;
-
     MovePlayer(&this->player);
-    DrawCubeV(this->player.position, this->player.size, this->player.color);
 
     for (uint64_t i = 0; i < this->wallsNum; ++i) {
         DrawCubeV(this->walls[i].position, this->walls[i].size, this->walls[i].color);
-        DrawBoundingBox(this->player.box, GREEN);
-        DrawBoundingBox(this->walls[i].box, BLUE);
+        DrawBoundingBox(this->walls[i].hitbox, BLUE);
 
-        if (CheckCollisionBoxes(this->player.box, this->walls[i].box)) {
+        if (CheckCollisionBoxes(this->player.hitbox, this->walls[i].hitbox)) {
             this->player.position = prevPlayerPosition;
         }
     }
+
+    DrawCubeV(this->player.position, this->player.size, this->player.color);
+    DrawBoundingBox(this->player.hitbox, GREEN);
 }
 
 /**
@@ -112,7 +114,7 @@ void LoadMap(Application* const this, const char* path) {
     this->mapLayout = (char*)malloc((fileSize + 1) * sizeof(char));
     this->walls = (Wall*)malloc(fileSize * sizeof(Wall));
 
-    // to store wall in a serially
+    // to store walls serially
     uint64_t wallIdx = 0;
     // for player position
     float x = 0.0f;
@@ -130,18 +132,8 @@ void LoadMap(Application* const this, const char* path) {
                 .size = { 10.0f, 10.0f, 10.0f },
                 .color  = { 0xbd, 0x78, 0xc9, 0xff },
             };
-            this->walls[wallIdx].box = (BoundingBox) {
-                (Vector3) {
-                    this->walls[wallIdx].position.x - this->walls[wallIdx].size.x / 2.0f,
-                    this->walls[wallIdx].position.y - this->walls[wallIdx].size.y / 2.0f,
-                    this->walls[wallIdx].position.z - this->walls[wallIdx].size.z / 2.0f
-                },
-                (Vector3) {
-                    this->walls[wallIdx].position.x + this->walls[wallIdx].size.x / 2.0f,
-                    this->walls[wallIdx].position.y + this->walls[wallIdx].size.y / 2.0f,
-                    this->walls[wallIdx].position.z + this->walls[wallIdx].size.z / 2.0f
-                }
-            };
+            this->walls[wallIdx].hitbox = 
+                CreateHitbox(this->walls[wallIdx].position, this->walls[wallIdx].size, Vector3Zero());
 
             x += 10.0f;
             ++wallIdx;
@@ -214,7 +206,6 @@ void CameraOrbit(Application* const app) {
     Vector3 view = Vector3Subtract(app->camera.position, app->camera.target);
     view = Vector3Transform(view, rotation);
     app->camera.position = Vector3Add(app->camera.target, view);
-
 }
 
 void ControlCamera(Application* const this) {
@@ -231,5 +222,4 @@ void ControlCamera(Application* const this) {
         CameraPan(this);
     else if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE))
         CameraOrbit(this);
-
 }
