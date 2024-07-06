@@ -23,7 +23,7 @@ void Init(Application* const this, const char* path) {
     this->player = (Player) {
         .size = { 4.0f, 10.0f, 4.0f },
         .color = RED,
-        .speed = 30.0f,
+        .speed = 15.0f,
         .hitboxPadding = { 0.5f, 0.0f, 0.5f },
     };
     this->player.camera = (Camera3D) {
@@ -36,6 +36,9 @@ void Init(Application* const this, const char* path) {
     this->player.hitbox = CreateHitbox(this->player.camera.position, this->player.size, this->player.hitboxPadding);
 
     this->camera = &this->player.camera;
+    this->activeCamera = PLAYER_CAMERA;
+    HideCursor();
+    DisableCursor();
 
     this->mapLayout = NULL;
     this->walls = NULL;
@@ -53,15 +56,35 @@ void Cleanup(Application* const this) {
 }
 
 void OnUpdate(Application* const this) {
-    if (IsKeyPressed(KEY_ONE)) {
-        this->camera = &this->player.camera;
-    } else if (IsKeyPressed(KEY_TWO)) {
-        this->camera = &this->sceneCamera;
+    // switch camera on `tab` key press
+    if (IsKeyPressed(KEY_TAB)) {
+        switch (this->activeCamera) {
+            case PLAYER_CAMERA: 
+                this->camera = &this->sceneCamera;
+                this->activeCamera = SCENE_CAMERA;
+                ShowCursor();
+                EnableCursor();
+                break;
+
+            case SCENE_CAMERA:
+                this->camera = &this->player.camera;
+                this->activeCamera = PLAYER_CAMERA;
+                HideCursor();
+                DisableCursor();
+                break;
+        }
     }
 
     Vector3 prevPlayerPosition = this->player.camera.position;
-    this->ControlCamera(this->camera);
-    this->player.hitbox = CreateHitbox(this->player.camera.position, this->player.size, this->player.hitboxPadding);
+    switch (this->activeCamera) {
+        case PLAYER_CAMERA:
+            MovePlayer(&this->player);
+            break;
+
+        case SCENE_CAMERA:
+            this->ControlCamera(this->camera);
+            break;
+    }
 
     for (uint64_t i = 0; i < this->wallsNum; ++i) {
         DrawCubeV(this->walls[i].position, this->walls[i].size, this->walls[i].color);

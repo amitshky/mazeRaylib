@@ -7,6 +7,7 @@
 void UIDrawGuides();
 
 int main(void) {
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(640, 640, "Maze");
     SetTargetFPS(60);
 

@@ -22,3 +22,4 @@ typedef struct Wall {
 } Wall;
 
 BoundingBox CreateHitbox(const Vector3 position, const Vector3 size, const Vector3 padding);
+void MovePlayer(Player* const player);

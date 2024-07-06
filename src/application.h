@@ -4,6 +4,11 @@
 #include <stdbool.h>
 #include "entities.h"
 
+typedef enum ActiveCamera {
+    PLAYER_CAMERA,
+    SCENE_CAMERA,
+} ActiveCamera;
+
 typedef struct Application {
     // methods
     void (*Init)(struct Application* const this, const char* path);
@@ -15,6 +20,7 @@ typedef struct Application {
 
     // variables
     Camera3D* camera; // active camera
+    ActiveCamera activeCamera;
     Camera3D sceneCamera;
     Player player;
 
