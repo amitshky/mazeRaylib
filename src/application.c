@@ -24,6 +24,7 @@ void Init(Application* const this, Config* const config) {
         .size = { 4.0f, 10.0f, 4.0f },
         .color = GREEN,
         .speed = 15.0f,
+        .damageVal = 5.0f,
         .direction = { 0.0f, 0.0f, 1.0f },
         .hitboxPadding = { 0.5f, 0.0f, 0.5f },
     };
@@ -111,32 +112,48 @@ void OnUpdate(Application* const this) {
             this->player.camera.position = prevPlayerPosition;
         }
 
-        // TODO: cast ray from the center to shoot
+        Ray ray = {
+            .position = this->player.camera.position,
+            .direction = GetCameraForward(&this->player.camera),
+        };
+
+        if (this->activeCamera == PLAYER_CAMERA && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            RayCollision hitInfo = GetRayCollisionBox(ray, this->enemies[i].hitbox);
+            if (hitInfo.hit) {
+                // TODO: show health bar
+                this->enemies[i].health -= this->player.damageVal;
+            }
+        }
+
+        if (this->enemies[i].health <= 0.0f) {
+            this->enemies[i].color = BLUE;
+        }
     }
 
     // DrawCubeV(this->player.camera.position, this->player.size, this->player.color);
     DrawBoundingBox(this->player.hitbox, GREEN);
-
 }
 
-void UpdateOverlay(Application* const /* this */) {
+void UpdateOverlay(Application* const this) {
     const int width  = GetScreenWidth();
     const int height = GetScreenHeight();
     const float widthHalf  = (float)width * 0.5f;
     const float heightHalf = (float)height * 0.5f;
 
-    // draw crosshair
-    // TODO: hardcode these values
-    Color color = GetColor(0xe8e7e5e0);
-    const float centerRadius = 4.0f;
-    const float breadthHalf = 1.0f;
-    const float length = 15.0f;
-    const Vector2 sizeVert = (Vector2) { breadthHalf * 2.0f, length             };
-    const Vector2 sizeHorz = (Vector2) { length            , breadthHalf * 2.0f };
-    DrawRectangleV((Vector2) { widthHalf - breadthHalf          , heightHalf - centerRadius - length }, sizeVert, color); // top
-    DrawRectangleV((Vector2) { widthHalf + centerRadius         , heightHalf - breadthHalf           }, sizeHorz, color); // right
-    DrawRectangleV((Vector2) { widthHalf - breadthHalf          , heightHalf + centerRadius          }, sizeVert, color); // bottom
-    DrawRectangleV((Vector2) { widthHalf - centerRadius - length, heightHalf - breadthHalf           }, sizeHorz, color); // left
+    if (this->activeCamera == PLAYER_CAMERA) {
+        // draw crosshair
+        // TODO: hardcode these values
+        const Color color = GetColor(0xe8e7e5e0);
+        const float centerRadius = 4.0f;
+        const float breadthHalf = 1.0f;
+        const float length = 15.0f;
+        const Vector2 sizeVert = (Vector2) { breadthHalf * 2.0f, length             };
+        const Vector2 sizeHorz = (Vector2) { length            , breadthHalf * 2.0f };
+        DrawRectangleV((Vector2) { widthHalf - breadthHalf          , heightHalf - centerRadius - length }, sizeVert, color); // top
+        DrawRectangleV((Vector2) { widthHalf + centerRadius         , heightHalf - breadthHalf           }, sizeHorz, color); // right
+        DrawRectangleV((Vector2) { widthHalf - breadthHalf          , heightHalf + centerRadius          }, sizeVert, color); // bottom
+        DrawRectangleV((Vector2) { widthHalf - centerRadius - length, heightHalf - breadthHalf           }, sizeHorz, color); // left
+    }
 }
 
 /**
@@ -196,6 +213,7 @@ void LoadMap(Application* const this, const char* path) {
                     .position = { x, 0.0f, z },
                     .size = { 8.0f, 10.0f, 8.0f },
                     .color = RED,
+                    .health = 10.0f,
                 };
                 this->enemies[enemyIdx].hitbox = 
                     CreateHitbox(this->enemies[enemyIdx].position, this->enemies[enemyIdx].size, Vector3Zero());

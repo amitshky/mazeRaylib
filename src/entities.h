@@ -11,6 +11,8 @@ typedef struct Player {
     float speed;
     Vector3 direction; // direction to look at
 
+    float damageVal;
+
     Vector3 hitboxPadding;
     BoundingBox hitbox;
 } Player;
