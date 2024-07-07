@@ -68,7 +68,7 @@ void OnUpdate(Application* const this) {
     // switch camera on `tab` key press
     if (IsKeyPressed(KEY_TAB)) {
         switch (this->activeCamera) {
-            case PLAYER_CAMERA: 
+            case PLAYER_CAMERA:
                 this->camera = &this->sceneCamera;
                 this->activeCamera = SCENE_CAMERA;
                 ShowCursor();
@@ -105,28 +105,27 @@ void OnUpdate(Application* const this) {
     }
 
     for (uint64_t i = 0; i < this->enemiesNum; ++i) {
-        DrawCubeV(this->enemies[i].position, this->enemies[i].size, this->enemies[i].color);
-        DrawBoundingBox(this->enemies[i].hitbox, BLUE);
+        if (this->enemies[i].health > 0.0f) {
+            DrawCubeV(this->enemies[i].position, this->enemies[i].size, this->enemies[i].color);
+            DrawBoundingBox(this->enemies[i].hitbox, BLUE);
+        }
 
-        if (CheckCollisionBoxes(this->player.hitbox, this->enemies[i].hitbox)) {
+        if (this->enemies[i].health > 0.0f && CheckCollisionBoxes(this->player.hitbox, this->enemies[i].hitbox)) {
             this->player.camera.position = prevPlayerPosition;
         }
 
-        Ray ray = {
-            .position = this->player.camera.position,
-            .direction = GetCameraForward(&this->player.camera),
-        };
-
+        // press left mouse button to shoot
         if (this->activeCamera == PLAYER_CAMERA && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            Ray ray = {
+                .position = this->player.camera.position,
+                .direction = GetCameraForward(&this->player.camera),
+            };
+
             RayCollision hitInfo = GetRayCollisionBox(ray, this->enemies[i].hitbox);
             if (hitInfo.hit) {
-                // TODO: show health bar
+                // TODO: show health bar for a short duration
                 this->enemies[i].health -= this->player.damageVal;
             }
-        }
-
-        if (this->enemies[i].health <= 0.0f) {
-            this->enemies[i].color = BLUE;
         }
     }
 
@@ -135,14 +134,12 @@ void OnUpdate(Application* const this) {
 }
 
 void UpdateOverlay(Application* const this) {
-    const int width  = GetScreenWidth();
-    const int height = GetScreenHeight();
-    const float widthHalf  = (float)width * 0.5f;
-    const float heightHalf = (float)height * 0.5f;
-
     if (this->activeCamera == PLAYER_CAMERA) {
         // draw crosshair
-        // TODO: hardcode these values
+        const int width  = GetScreenWidth();
+        const int height = GetScreenHeight();
+        const float widthHalf  = (float)width * 0.5f;
+        const float heightHalf = (float)height * 0.5f;
         const Color color = GetColor(0xe8e7e5e0);
         const float centerRadius = 4.0f;
         const float breadthHalf = 1.0f;
@@ -183,8 +180,6 @@ void LoadMap(Application* const this, const char* path) {
     // for player, enemy, etc position
     float x = 0.0f;
     float z = 0.0f;
-    // for player direction
-    char playerDirectionChar = '\0';
     for (uint64_t i = 0; i < fileSize; ++i) {
         int ch = fgetc(fp);
         if (ch == EOF)
@@ -202,14 +197,31 @@ void LoadMap(Application* const this, const char* path) {
                     .size = { 10.0f, 10.0f, 10.0f },
                     .color  = { 0xbd, 0x78, 0xc9, 0xff },
                 };
-                this->walls[wallIdx].hitbox = 
+                this->walls[wallIdx].hitbox =
                     CreateHitbox(this->walls[wallIdx].position, this->walls[wallIdx].size, Vector3Zero());
 
                 ++wallIdx;
-            } else if ((char)ch == '>' || (char)ch == '<' || (char)ch == 'v' || (char)ch == '^') { // player; the characters specify direction the player is facing
+            } else if ((char)ch == '>' || (char)ch == '<' || (char)ch == 'v' || (char)ch == '^') { // player
+                // the characters specify direction the player is facing
+                switch ((char)ch) {
+                    case '<': // negative x-axis
+                        this->player.direction = (Vector3) { -1.0f, 0.0f, 0.0f };
+                        break;
+                    case '>': // positive x-axis
+                        this->player.direction = (Vector3) { 1.0f, 0.0f, 0.0f };
+                        break;
+                    case 'v': // positive z-axis
+                        this->player.direction = (Vector3) { 0.0f, 0.0f, 1.0f };
+                        break;
+                    case '^': // negative z-axis
+                        this->player.direction = (Vector3) { 0.0f, 0.0f, -1.0f };
+                        break;
+                }
                 this->player.camera.position.x = x;
                 this->player.camera.position.z = z;
-                playerDirectionChar = (char)ch;
+                this->player.camera.target = Vector3Add(this->player.camera.position, this->player.direction);
+                this->player.hitbox = 
+                    CreateHitbox(this->player.camera.position, this->player.size, this->player.hitboxPadding);
             } else if ((char)ch == 'e') { // enemy
                 // TODO: reduce the size of the enemies and change position.y so that the enemies touch the ground
                 this->enemies[enemyIdx] = (Enemy) {
@@ -218,7 +230,7 @@ void LoadMap(Application* const this, const char* path) {
                     .color = RED,
                     .health = 10.0f,
                 };
-                this->enemies[enemyIdx].hitbox = 
+                this->enemies[enemyIdx].hitbox =
                     CreateHitbox(this->enemies[enemyIdx].position, this->enemies[enemyIdx].size, Vector3Zero());
 
                 ++enemyIdx;
@@ -230,19 +242,6 @@ void LoadMap(Application* const this, const char* path) {
     this->mapLayout[fileSize] = '\0';
     this->wallsNum = wallIdx;
     this->enemiesNum = enemyIdx;
-
-    // set player direction
-    if (playerDirectionChar == '<') {
-        this->player.direction = (Vector3) { -1.0f, 0.0f, 0.0f };
-    } else if (playerDirectionChar == '>') {
-        this->player.direction = (Vector3) { 1.0f, 0.0f, 0.0f };
-    } else if (playerDirectionChar == 'v') {
-        this->player.direction = (Vector3) { 0.0f, 0.0f, 1.0f };
-    } else if (playerDirectionChar == '^') {
-        this->player.direction = (Vector3) { 0.0f, 0.0f, -1.0f };
-    }
-    this->player.camera.target = Vector3Add(this->player.camera.position, this->player.direction);
-    this->player.hitbox = CreateHitbox(this->player.camera.position, this->player.size, this->player.hitboxPadding);
 
     void* temp = malloc(this->wallsNum * sizeof(Wall));
     memcpy(temp, this->walls, this->wallsNum * sizeof(Wall));

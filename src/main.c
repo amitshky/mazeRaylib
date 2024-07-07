@@ -12,7 +12,7 @@ int main(void) {
         .width = 640,
         .height = 640,
         .title = "Maze",
-        .mapPath = "assets/map/map2.txt",
+        .mapPath = "assets/map/map1.txt",
         .fovy = 45.0f,
     };
 
