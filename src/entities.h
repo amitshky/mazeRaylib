@@ -9,6 +9,7 @@ typedef struct Player {
 
     Camera3D camera;
     float speed;
+    Vector3 direction; // direction to look at
 
     Vector3 hitboxPadding;
     BoundingBox hitbox;

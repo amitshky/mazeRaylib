@@ -34,6 +34,7 @@ int main(void) {
 
         EndMode3D();
 
+        app.UpdateOverlay(&app);
         DrawFPS(10, 10);
         EndDrawing();
     }

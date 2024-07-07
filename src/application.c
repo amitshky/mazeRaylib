@@ -24,6 +24,7 @@ void Init(Application* const this, Config* const config) {
         .size = { 4.0f, 10.0f, 4.0f },
         .color = GREEN,
         .speed = 15.0f,
+        .direction = { 0.0f, 0.0f, 1.0f },
         .hitboxPadding = { 0.5f, 0.0f, 0.5f },
     };
     this->player.camera = (Camera3D) {
@@ -45,6 +46,7 @@ void Init(Application* const this, Config* const config) {
     this->wallsNum = 0;
     this->enemies = NULL;
     this->enemiesNum = 0;
+
     this->LoadMap(this, config->mapPath);
 }
 
@@ -115,7 +117,26 @@ void OnUpdate(Application* const this) {
     // DrawCubeV(this->player.camera.position, this->player.size, this->player.color);
     DrawBoundingBox(this->player.hitbox, GREEN);
 
-    // TODO: draw cross hair
+}
+
+void UpdateOverlay(Application* const /* this */) {
+    const int width  = GetScreenWidth();
+    const int height = GetScreenHeight();
+    const float widthHalf  = (float)width * 0.5f;
+    const float heightHalf = (float)height * 0.5f;
+
+    // draw crosshair
+    // TODO: hardcode these values
+    Color color = GetColor(0xe8e7e5e0);
+    const float centerRadius = 4.0f;
+    const float breadthHalf = 1.0f;
+    const float length = 15.0f;
+    const Vector2 sizeVert = (Vector2) { breadthHalf * 2.0f, length             };
+    const Vector2 sizeHorz = (Vector2) { length            , breadthHalf * 2.0f };
+    DrawRectangleV((Vector2) { widthHalf - breadthHalf          , heightHalf - centerRadius - length }, sizeVert, color); // top
+    DrawRectangleV((Vector2) { widthHalf + centerRadius         , heightHalf - breadthHalf           }, sizeHorz, color); // right
+    DrawRectangleV((Vector2) { widthHalf - breadthHalf          , heightHalf + centerRadius          }, sizeVert, color); // bottom
+    DrawRectangleV((Vector2) { widthHalf - centerRadius - length, heightHalf - breadthHalf           }, sizeHorz, color); // left
 }
 
 /**
@@ -189,7 +210,7 @@ void LoadMap(Application* const this, const char* path) {
     this->wallsNum = wallIdx;
     this->enemiesNum = enemyIdx;
 
-    this->player.camera.target = Vector3Add(this->player.camera.position, (Vector3) { 1.0f, 0.0f, 0.0f });
+    this->player.camera.target = Vector3Add(this->player.camera.position, this->player.direction);
     this->player.hitbox = CreateHitbox(this->player.camera.position, this->player.size, this->player.hitboxPadding);
 
     void* temp = malloc(this->wallsNum * sizeof(Wall));

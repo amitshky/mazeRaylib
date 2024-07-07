@@ -15,6 +15,7 @@ typedef struct Application {
     void (*Init)(struct Application* const this, Config* const config);
     void (*Cleanup)(struct Application* const this);
     void (*OnUpdate)(struct Application* const this);
+    void (*UpdateOverlay)(struct Application* const this);
 
     void (*LoadMap)(struct Application* const this, const char* path);
     void (*ControlCamera)(Camera3D* const camera);
@@ -37,6 +38,7 @@ typedef struct Application {
 void Init(Application* const this, Config* const config);
 void Cleanup(Application* const this);
 void OnUpdate(Application* const this);
+void UpdateOverlay(Application* const this);
 
 void LoadMap(Application* const this, const char* path);
 void ControlCamera(Camera3D* const camera);
@@ -47,5 +49,6 @@ void ControlCamera(Camera3D* const camera);
     .OnUpdate = OnUpdate, \
     .LoadMap = LoadMap, \
     .ControlCamera = ControlCamera, \
+    .UpdateOverlay = UpdateOverlay, \
 }
 
