@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include "types.h"
 #include "entities.h"
 
 typedef enum ActiveCamera {
@@ -11,7 +12,7 @@ typedef enum ActiveCamera {
 
 typedef struct Application {
     // methods
-    void (*Init)(struct Application* const this, const char* path);
+    void (*Init)(struct Application* const this, Config* const config);
     void (*Cleanup)(struct Application* const this);
     void (*OnUpdate)(struct Application* const this);
 
@@ -24,13 +25,16 @@ typedef struct Application {
     Camera3D sceneCamera;
     Player player;
 
+    Enemy* enemies;
+    uint64_t enemiesNum;
+
     // initialized in `LoadMap` function
     char* mapLayout;
     Wall* walls; // list of all walls
     uint64_t wallsNum; // number of walls
 } Application;
 
-void Init(Application* const this, const char* path);
+void Init(Application* const this, Config* const config);
 void Cleanup(Application* const this);
 void OnUpdate(Application* const this);
 

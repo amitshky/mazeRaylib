@@ -17,7 +17,7 @@ BoundingBox CreateHitbox(const Vector3 position, const Vector3 size, const Vecto
 }
 
 void MovePlayer(Player* const player) {
-    // W, A, S, D to move the camera's position
+    // W, A, S, D to move the player's position
     float speed = player->speed;
     if (IsKeyDown(KEY_LEFT_SHIFT)) {
         speed *= 2.0f;

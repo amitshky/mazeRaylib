@@ -2,17 +2,26 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include "raylib.h"
+#include "types.h"
 #include "application.h"
 
 void UIDrawGuides();
 
 int main(void) {
+    Config config = {
+        .width = 640,
+        .height = 640,
+        .title = "Maze",
+        .mapPath = "assets/map/box.txt",
+        .fovy = 45.0f,
+    };
+
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
-    InitWindow(640, 640, "Maze");
+    InitWindow(config.width, config.height, config.title);
     SetTargetFPS(60);
 
     Application app = CREATE_APPLICATION();
-    app.Init(&app, "assets/map/map1.txt");
+    app.Init(&app, &config);
 
     while (!WindowShouldClose()) {
         BeginDrawing();

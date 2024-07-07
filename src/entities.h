@@ -21,5 +21,14 @@ typedef struct Wall {
     BoundingBox hitbox;
 } Wall;
 
+typedef struct Enemy {
+    Vector3 position;
+    Vector3 size;
+    Color color;
+    BoundingBox hitbox;
+
+    float health;
+} Enemy;
+
 BoundingBox CreateHitbox(const Vector3 position, const Vector3 size, const Vector3 padding);
 void MovePlayer(Player* const player);
