@@ -25,7 +25,7 @@ void Init(Application* const this, Config* const config) {
         .color = GREEN,
         .speed = 15.0f,
         .damageVal = 5.0f,
-        .direction = { 0.0f, 0.0f, 1.0f },
+        .direction = { 0.0f, 0.0f, 0.0f },
         .hitboxPadding = { 0.5f, 0.0f, 0.5f },
     };
     this->player.camera = (Camera3D) {
@@ -180,9 +180,11 @@ void LoadMap(Application* const this, const char* path) {
     // to keep count
     size_t wallIdx = 0;
     size_t enemyIdx = 0;
-    // for player position
+    // for player, enemy, etc position
     float x = 0.0f;
     float z = 0.0f;
+    // for player direction
+    char playerDirectionChar = '\0';
     for (uint64_t i = 0; i < fileSize; ++i) {
         int ch = fgetc(fp);
         if (ch == EOF)
@@ -204,9 +206,10 @@ void LoadMap(Application* const this, const char* path) {
                     CreateHitbox(this->walls[wallIdx].position, this->walls[wallIdx].size, Vector3Zero());
 
                 ++wallIdx;
-            } else if ((char)ch == 'x') { // player
+            } else if ((char)ch == '>' || (char)ch == '<' || (char)ch == 'v' || (char)ch == '^') { // player; the characters specify direction the player is facing
                 this->player.camera.position.x = x;
                 this->player.camera.position.z = z;
+                playerDirectionChar = (char)ch;
             } else if ((char)ch == 'e') { // enemy
                 // TODO: reduce the size of the enemies and change position.y so that the enemies touch the ground
                 this->enemies[enemyIdx] = (Enemy) {
@@ -228,6 +231,16 @@ void LoadMap(Application* const this, const char* path) {
     this->wallsNum = wallIdx;
     this->enemiesNum = enemyIdx;
 
+    // set player direction
+    if (playerDirectionChar == '<') {
+        this->player.direction = (Vector3) { -1.0f, 0.0f, 0.0f };
+    } else if (playerDirectionChar == '>') {
+        this->player.direction = (Vector3) { 1.0f, 0.0f, 0.0f };
+    } else if (playerDirectionChar == 'v') {
+        this->player.direction = (Vector3) { 0.0f, 0.0f, 1.0f };
+    } else if (playerDirectionChar == '^') {
+        this->player.direction = (Vector3) { 0.0f, 0.0f, -1.0f };
+    }
     this->player.camera.target = Vector3Add(this->player.camera.position, this->player.direction);
     this->player.hitbox = CreateHitbox(this->player.camera.position, this->player.size, this->player.hitboxPadding);
 
