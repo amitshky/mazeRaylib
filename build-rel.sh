@@ -3,23 +3,25 @@
 # exit immediately if a command exits with a non-zero status
 set -e
 
-BUILD_DIR="build/rel"
+BUILD_DIR="build"
+REL_DIR="rel"
 
 # check if build/ directory exists and create build/ if it doesn't
-if [ ! -d ./build/ ]; then
-    mkdir build/
+if [ ! -d "./$BUILD_DIR/" ]; then
+    mkdir "$BUILD_DIR/"
 fi
 
-if [ ! -d ./build/rel/ ]; then
-    mkdir build/rel/
+if [ ! -d "./$BUILD_DIR/$REL_DIR/" ]; then
+    mkdir "$BUILD_DIR/$REL_DIR/"
 fi
 
-EXEC_FILE=$BUILD_DIR"/main"
+EXEC_FILE="$BUILD_DIR/$REL_DIR/main"
 
 SRC_FILES="\
     src/main.c \
     src/application.c \
     src/camera.c \
+    src/entities.c \
 "
 
 INCLUDE_DIR="\

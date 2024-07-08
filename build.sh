@@ -6,11 +6,11 @@ set -e
 BUILD_DIR="build"
 
 # check if build/ directory exists and create build/ if it doesn't
-if [ ! -d ./build/ ]; then
-    mkdir build/
+if [ ! -d "./$BUILD_DIR/" ]; then
+    mkdir "$BUILD_DIR"
 fi
 
-EXEC_FILE=$BUILD_DIR"/main"
+EXEC_FILE="$BUILD_DIR/main"
 
 SRC_FILES="\
     src/main.c \

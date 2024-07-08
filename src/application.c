@@ -162,12 +162,14 @@ void UpdateOverlay(Application* const this) {
         const float heightHalf = (float)height * 0.5f;
 
         const float centerRadius = 4.0f;
-        const float breadthHalf = 1.0f;
         const float length = 15.0f;
-        const Color color = GetColor(0xe8e7e5e0);
+        const float breadthHalf = 1.0f;
+        const float breadth = breadthHalf * 2.0f;
 
-        const Vector2 sizeVert = (Vector2) { breadthHalf * 2.0f, length             };
-        const Vector2 sizeHorz = (Vector2) { length            , breadthHalf * 2.0f };
+        const Color color = GetColor(0xe8e7e5e0);
+        const Vector2 sizeVert = (Vector2) { breadth, length };
+        const Vector2 sizeHorz = (Vector2) { length, breadth };
+
         DrawRectangleV((Vector2) { widthHalf - breadthHalf          , heightHalf - centerRadius - length }, sizeVert, color); // top
         DrawRectangleV((Vector2) { widthHalf + centerRadius         , heightHalf - breadthHalf           }, sizeHorz, color); // right
         DrawRectangleV((Vector2) { widthHalf - breadthHalf          , heightHalf + centerRadius          }, sizeVert, color); // bottom
