@@ -24,7 +24,7 @@ void Init(Application* const this, Config* const config) {
         .size = { 4.0f, 10.0f, 4.0f },
         .color = GREEN,
         .speed = 15.0f,
-        .damageVal = 5.0f,
+        .damageVal = 10.0f,
         .direction = { 0.0f, 0.0f, 0.0f },
         .hitboxPadding = { 0.5f, 0.0f, 0.5f },
     };
@@ -104,13 +104,10 @@ void OnUpdate(Application* const this) {
         }
     }
 
+    bool isHit = false; // so that only one enemy is hit
     for (uint64_t i = 0; i < this->enemiesNum; ++i) {
-        if (this->enemies[i].health > 0.0f) {
-            DrawCubeV(this->enemies[i].position, this->enemies[i].size, this->enemies[i].color);
-            DrawBoundingBox(this->enemies[i].hitbox, BLUE);
-        }
-
-        if (this->enemies[i].health > 0.0f && CheckCollisionBoxes(this->player.hitbox, this->enemies[i].hitbox)) {
+        // check for collision with the player
+        if (CheckCollisionBoxes(this->player.hitbox, this->enemies[i].hitbox)) {
             this->player.camera.position = prevPlayerPosition;
         }
 
@@ -122,11 +119,26 @@ void OnUpdate(Application* const this) {
             };
 
             RayCollision hitInfo = GetRayCollisionBox(ray, this->enemies[i].hitbox);
-            if (hitInfo.hit) {
+            if (hitInfo.hit && !isHit) {
                 // TODO: show health bar for a short duration
+                // TODO: hit only one enemy at a time (check distance maybe)
                 this->enemies[i].health -= this->player.damageVal;
+                isHit = true;
             }
         }
+
+        // remove the dead enemies
+        if (this->enemies[i].health <= 0.0f) {
+            for (uint64_t j = i; j < this->enemiesNum; ++j) {
+                if (j + 1 < this->enemiesNum) {
+                    this->enemies[j] = this->enemies[j + 1];
+                }
+            }
+            --this->enemiesNum;
+        }
+
+        DrawCubeV(this->enemies[i].position, this->enemies[i].size, this->enemies[i].color);
+        DrawBoundingBox(this->enemies[i].hitbox, BLUE);
     }
 
     // DrawCubeV(this->player.camera.position, this->player.size, this->player.color);
@@ -134,16 +146,23 @@ void OnUpdate(Application* const this) {
 }
 
 void UpdateOverlay(Application* const this) {
+    // render number of enemies remainig
+    char text[255] = {};
+    sprintf(text, "Enemies remaining: %lu", this->enemiesNum);
+    DrawText(text, 10, 32, 20, WHITE);
+
     if (this->activeCamera == PLAYER_CAMERA) {
         // draw crosshair
         const int width  = GetScreenWidth();
         const int height = GetScreenHeight();
         const float widthHalf  = (float)width * 0.5f;
         const float heightHalf = (float)height * 0.5f;
-        const Color color = GetColor(0xe8e7e5e0);
+
         const float centerRadius = 4.0f;
         const float breadthHalf = 1.0f;
         const float length = 15.0f;
+        const Color color = GetColor(0xe8e7e5e0);
+
         const Vector2 sizeVert = (Vector2) { breadthHalf * 2.0f, length             };
         const Vector2 sizeHorz = (Vector2) { length            , breadthHalf * 2.0f };
         DrawRectangleV((Vector2) { widthHalf - breadthHalf          , heightHalf - centerRadius - length }, sizeVert, color); // top

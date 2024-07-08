@@ -5,9 +5,10 @@
 #include "types.h"
 #include "application.h"
 
-void UIDrawGuides();
+void UIDrawGuides(void);
 
 int main(void) {
+    // TODO: hot reloading
     Config config = {
         .width = 640,
         .height = 640,
@@ -44,7 +45,7 @@ int main(void) {
     return 0;
 }
 
-void UIDrawGuides() {
+void UIDrawGuides(void) {
     const float bounds = 1000.0f;
     DrawLine3D((Vector3){ 0.0f, -bounds, 0.0f }, (Vector3){ 0.0f, bounds, 0.0f }, GREEN);
     DrawLine3D((Vector3){ -bounds, 0.0f, 0.0f }, (Vector3){ bounds, 0.0f, 0.0f }, RED);
