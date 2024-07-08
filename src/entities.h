@@ -1,6 +1,7 @@
 #pragma once
 
 #include "raylib.h"
+#include "types.h"
 
 typedef struct Player {
     // the camera position is the position of the player
@@ -35,3 +36,4 @@ typedef struct Enemy {
 
 BoundingBox CreateHitbox(const Vector3 position, const Vector3 size, const Vector3 padding);
 void MovePlayer(Player* const player);
+void PlayerOnCollision(Player* const player, const CollisionState* const state);

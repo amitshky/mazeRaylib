@@ -44,3 +44,7 @@ void MovePlayer(Player* const player) {
 
     player->hitbox = CreateHitbox(player->camera.position, player->size, player->hitboxPadding);
 }
+
+void PlayerOnCollision(Player* const player, const CollisionState* const state) {
+    player->camera.position = state->position;
+}

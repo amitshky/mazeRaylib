@@ -84,7 +84,11 @@ void OnUpdate(Application* const this) {
         }
     }
 
-    Vector3 prevPlayerPosition = this->player.camera.position;
+    // set state before collision
+    CollisionState state = {
+        .position = this->player.camera.position,
+    };
+
     switch (this->activeCamera) {
         case PLAYER_CAMERA:
             MovePlayer(&this->player);
@@ -100,7 +104,7 @@ void OnUpdate(Application* const this) {
         DrawBoundingBox(this->walls[i].hitbox, BLUE);
 
         if (CheckCollisionBoxes(this->player.hitbox, this->walls[i].hitbox)) {
-            this->player.camera.position = prevPlayerPosition;
+            PlayerOnCollision(&this->player, &state);
         }
     }
 
@@ -108,7 +112,7 @@ void OnUpdate(Application* const this) {
     for (uint64_t i = 0; i < this->enemiesNum; ++i) {
         // check for collision with the player
         if (CheckCollisionBoxes(this->player.hitbox, this->enemies[i].hitbox)) {
-            this->player.camera.position = prevPlayerPosition;
+            PlayerOnCollision(&this->player, &state);
         }
 
         // press left mouse button to shoot
@@ -121,7 +125,6 @@ void OnUpdate(Application* const this) {
             RayCollision hitInfo = GetRayCollisionBox(ray, this->enemies[i].hitbox);
             if (hitInfo.hit && !isHit) {
                 // TODO: show health bar for a short duration
-                // TODO: hit only one enemy at a time (check distance maybe)
                 this->enemies[i].health -= this->player.damageVal;
                 isHit = true;
             }
@@ -146,7 +149,7 @@ void OnUpdate(Application* const this) {
 }
 
 void UpdateOverlay(Application* const this) {
-    // render number of enemies remainig
+    // render number of enemies remaining
     char text[255] = {};
     sprintf(text, "Enemies remaining: %lu", this->enemiesNum);
     DrawText(text, 10, 32, 20, WHITE);
