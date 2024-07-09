@@ -12,35 +12,34 @@ typedef enum ActiveCamera {
 
 typedef struct Application {
     // methods
-    void (*Init)(struct Application* const this, Config* const config);
+    void (*Init)(struct Application* const this, const Config* const config);
     void (*Cleanup)(struct Application* const this);
     void (*OnUpdate)(struct Application* const this);
     void (*UpdateOverlay)(struct Application* const this);
 
-    void (*LoadMap)(struct Application* const this, const char* path);
+    void (*LoadMap)(struct Application* const this, const Config* const config);
     void (*ControlCamera)(Camera3D* const camera);
 
     // variables
     Camera3D* camera; // active camera
     ActiveCamera activeCamera;
     Camera3D sceneCamera;
-    Player player;
-
-    Enemy* enemies;
-    uint64_t enemiesNum;
 
     // initialized in `LoadMap` function
     char* mapLayout;
-    Wall* walls; // list of all walls
-    uint64_t wallsNum; // number of walls
+    Entity player;
+    Entity* entities; // list of walls and enemies
+    uint64_t numEntities;
+    uint64_t numWalls;
+    uint64_t numEnemies;
 } Application;
 
-void Init(Application* const this, Config* const config);
+void Init(Application* const this, const Config* const config);
 void Cleanup(Application* const this);
 void OnUpdate(Application* const this);
 void UpdateOverlay(Application* const this);
 
-void LoadMap(Application* const this, const char* path);
+void LoadMap(Application* const this, const Config* const config);
 void ControlCamera(Camera3D* const camera);
 
 #define CREATE_APPLICATION() (Application) { \

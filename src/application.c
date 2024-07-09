@@ -11,7 +11,7 @@
 #include "utils.h"
 
 
-void Init(Application* const this, Config* const config) {
+void Init(Application* const this, const Config* const config) {
     this->sceneCamera = (Camera3D) {
         .position = { 75.0f, 200.0f, 76.5f },
         .target   = { 75.0f,   0.0f, 75.5f },
@@ -20,48 +20,29 @@ void Init(Application* const this, Config* const config) {
         .projection = CAMERA_PERSPECTIVE,
     };
 
-    this->player = (Player) {
-        .size = { 4.0f, 10.0f, 4.0f },
-        .color = GREEN,
-        .speed = 15.0f,
-        .damageVal = 10.0f,
-        .direction = { 0.0f, 0.0f, 0.0f },
-        .hitboxPadding = { 0.5f, 0.0f, 0.5f },
-    };
-    this->player.camera = (Camera3D) {
-        .position = { 0.0f, 0.0f, 0.0f },
-        .target   = { 0.0f, 0.0f, 0.0f },
-        .up       = { 0.0f, 1.0f, 0.0f },
-        .fovy     = 45.0f,
-        .projection = CAMERA_PERSPECTIVE,
-    };
-    this->player.hitbox = CreateHitbox(this->player.camera.position, this->player.size, this->player.hitboxPadding);
+    this->mapLayout = NULL;
+    this->entities = NULL;
+    this->numEntities = 0;
+    this->numWalls = 0;
+    this->numEnemies = 0;
 
-    this->camera = &this->player.camera;
+    this->LoadMap(this, config);
+
+    this->camera = &this->player.player.camera;
     this->activeCamera = PLAYER_CAMERA;
     HideCursor();
     DisableCursor();
-
-    this->mapLayout = NULL;
-    this->walls = NULL;
-    this->wallsNum = 0;
-    this->enemies = NULL;
-    this->enemiesNum = 0;
-
-    this->LoadMap(this, config->mapPath);
 }
 
 void Cleanup(Application* const this) {
     free(this->mapLayout);
     this->mapLayout = NULL;
 
-    free(this->walls);
-    this->walls = NULL;
-    this->wallsNum = 0;
-
-    free(this->enemies);
-    this->enemies = NULL;
-    this->enemiesNum = 0;
+    free(this->entities);
+    this->entities = NULL;
+    this->numEntities = 0;
+    this->numWalls = 0;
+    this->numEnemies = 0;
 }
 
 void OnUpdate(Application* const this) {
@@ -76,7 +57,7 @@ void OnUpdate(Application* const this) {
                 break;
 
             case SCENE_CAMERA:
-                this->camera = &this->player.camera;
+                this->camera = &this->player.player.camera;
                 this->activeCamera = PLAYER_CAMERA;
                 HideCursor();
                 DisableCursor();
@@ -86,7 +67,7 @@ void OnUpdate(Application* const this) {
 
     // set state before collision
     CollisionState state = {
-        .position = this->player.camera.position,
+        .position = this->player.position,
     };
 
     switch (this->activeCamera) {
@@ -99,49 +80,40 @@ void OnUpdate(Application* const this) {
             break;
     }
 
-    for (uint64_t i = 0; i < this->wallsNum; ++i) {
-        DrawCubeV(this->walls[i].position, this->walls[i].size, this->walls[i].color);
-        DrawBoundingBox(this->walls[i].hitbox, BLUE);
-
-        if (CheckCollisionBoxes(this->player.hitbox, this->walls[i].hitbox)) {
-            PlayerOnCollision(&this->player, &state);
-        }
-    }
-
     bool isHit = false; // so that only one enemy is hit
-    for (uint64_t i = 0; i < this->enemiesNum; ++i) {
-        // check for collision with the player
-        if (CheckCollisionBoxes(this->player.hitbox, this->enemies[i].hitbox)) {
+    for (uint64_t i = 0; i < this->numEntities; ++i) {
+        if (CheckCollisionBoxes(this->player.hitbox, this->entities[i].hitbox)) {
             PlayerOnCollision(&this->player, &state);
         }
 
         // press left mouse button to shoot
         if (this->activeCamera == PLAYER_CAMERA && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             Ray ray = {
-                .position = this->player.camera.position,
-                .direction = GetCameraForward(&this->player.camera),
+                .position = this->player.position,
+                .direction = GetCameraForward(&this->player.player.camera),
             };
 
-            RayCollision hitInfo = GetRayCollisionBox(ray, this->enemies[i].hitbox);
-            if (hitInfo.hit && !isHit) {
+            RayCollision hitInfo = GetRayCollisionBox(ray, this->entities[i].hitbox);
+            if (hitInfo.hit && !isHit && this->entities[i].type == ENTITY_ENEMY) {
                 // TODO: show health bar for a short duration
-                this->enemies[i].health -= this->player.damageVal;
+                this->entities[i].enemy.health -= this->player.player.damageVal;
                 isHit = true;
             }
         }
 
         // remove the dead enemies
-        if (this->enemies[i].health <= 0.0f) {
-            for (uint64_t j = i; j < this->enemiesNum; ++j) {
-                if (j + 1 < this->enemiesNum) {
-                    this->enemies[j] = this->enemies[j + 1];
+        if (this->entities[i].type == ENTITY_ENEMY && this->entities[i].enemy.health <= 0.0f) {
+            for (uint64_t j = i; j < this->numEntities; ++j) {
+                if (j + 1 < this->numEntities) {
+                    this->entities[j] = this->entities[j + 1];
                 }
             }
-            --this->enemiesNum;
+            --this->numEnemies;
+            --this->numEntities;
         }
 
-        DrawCubeV(this->enemies[i].position, this->enemies[i].size, this->enemies[i].color);
-        DrawBoundingBox(this->enemies[i].hitbox, BLUE);
+        DrawCubeV(this->entities[i].position, this->entities[i].size, this->entities[i].color);
+        DrawBoundingBox(this->entities[i].hitbox, BLUE);
     }
 
     // DrawCubeV(this->player.camera.position, this->player.size, this->player.color);
@@ -151,40 +123,22 @@ void OnUpdate(Application* const this) {
 void UpdateOverlay(Application* const this) {
     // render number of enemies remaining
     char text[255] = {};
-    sprintf(text, "Enemies remaining: %lu", this->enemiesNum);
+    sprintf(text, "Enemies remaining: %lu", this->numEnemies);
     DrawText(text, 10, 32, 20, WHITE);
 
     if (this->activeCamera == PLAYER_CAMERA) {
-        // draw crosshair
-        const int width  = GetScreenWidth();
-        const int height = GetScreenHeight();
-        const float widthHalf  = (float)width * 0.5f;
-        const float heightHalf = (float)height * 0.5f;
-
-        const float centerRadius = 4.0f;
-        const float length = 15.0f;
-        const float breadthHalf = 1.0f;
-        const float breadth = breadthHalf * 2.0f;
-
-        const Color color = GetColor(0xe8e7e5e0);
-        const Vector2 sizeVert = (Vector2) { breadth, length };
-        const Vector2 sizeHorz = (Vector2) { length, breadth };
-
-        DrawRectangleV((Vector2) { widthHalf - breadthHalf          , heightHalf - centerRadius - length }, sizeVert, color); // top
-        DrawRectangleV((Vector2) { widthHalf + centerRadius         , heightHalf - breadthHalf           }, sizeHorz, color); // right
-        DrawRectangleV((Vector2) { widthHalf - breadthHalf          , heightHalf + centerRadius          }, sizeVert, color); // bottom
-        DrawRectangleV((Vector2) { widthHalf - centerRadius - length, heightHalf - breadthHalf           }, sizeHorz, color); // left
+        DrawCrosshair();
     }
 }
 
 /**
  * loads map from file
  */
-void LoadMap(Application* const this, const char* path) {
-    FILE* fp = fopen(path, "r");
+void LoadMap(Application* const this, const Config* const config) {
+    FILE* fp = fopen(config->mapPath, "r");
     if (fp == NULL)
     {
-        printf("Error opening file: %s\n", path);
+        printf("Error opening file: %s\n", config->mapPath);
         exit(-1);
     }
 
@@ -194,13 +148,13 @@ void LoadMap(Application* const this, const char* path) {
 
     this->mapLayout = (char*)malloc((fileSize + 1) * sizeof(char));
 
-    // these are reallocated later
-    this->walls = (Wall*)malloc(fileSize * sizeof(Wall));
-    this->enemies = (Enemy*)malloc(fileSize * sizeof(Enemy));
+    // reallocated later
+    this->entities = (Entity*)malloc(fileSize * sizeof(Entity));
 
     // to keep count
-    size_t wallIdx = 0;
-    size_t enemyIdx = 0;
+    this->numEntities = 0;
+    this->numEnemies = 0;
+    this->numWalls = 0;
     // for player, enemy, etc position
     float x = 0.0f;
     float z = 0.0f;
@@ -216,71 +170,85 @@ void LoadMap(Application* const this, const char* path) {
             z += 10.f;
         } else {
             if ((char)ch == '#') { // wall
-                this->walls[wallIdx] = (Wall) {
-                    .position  = { x, 0.0f, z },
-                    .size = { 10.0f, 10.0f, 10.0f },
-                    .color  = { 0xbd, 0x78, 0xc9, 0xff },
+                this->entities[this->numEntities] = (Entity) {
+                    .type     = ENTITY_WALL,
+                    .wall     = {},
+                    .position = { x, 0.0f, z },
+                    .size     = { 10.0f, 10.0f, 10.0f },
+                    .color    = GetColor(0x291a59ff),
+                    .hitboxPadding = Vector3Zero(),
                 };
-                this->walls[wallIdx].hitbox =
-                    CreateHitbox(this->walls[wallIdx].position, this->walls[wallIdx].size, Vector3Zero());
+                this->entities[this->numEntities].hitbox = CreateHitbox(this->entities[this->numEntities].position, this->entities[this->numEntities].size, this->entities[this->numEntities].hitboxPadding);
 
-                ++wallIdx;
+                ++this->numWalls;
+                ++this->numEntities;
             } else if ((char)ch == '>' || (char)ch == '<' || (char)ch == 'v' || (char)ch == '^') { // player
                 // the characters specify direction the player is facing
+                this->player = (Entity) {
+                    .type = ENTITY_PLAYER,
+                    .position = { x, 0.0f, z },
+                    .size = { 4.0f, 10.0f, 4.0f },
+                    .color = WHITE,
+                    .hitboxPadding = { 0.5f, 0.0f, 0.5f },
+                };
+                this->player.hitbox = CreateHitbox(this->player.position, this->player.size, this->player.hitboxPadding);
+                this->player.player = (Player) {
+                    .speed = 15.0f,
+                    .damageVal = 10.0f,
+                    .camera = {
+                        .position = this->player.position,
+                        .target   = { 0.0f, 0.0f, 0.0f },
+                        .up       = { 0.0f, 1.0f, 0.0f },
+                        .fovy     = config->fovy,
+                        .projection = CAMERA_PERSPECTIVE,
+                    },
+                };
                 switch ((char)ch) {
                     case '<': // negative x-axis
-                        this->player.direction = (Vector3) { -1.0f, 0.0f, 0.0f };
+                        this->player.player.direction = (Vector3) { -1.0f, 0.0f, 0.0f };
                         break;
                     case '>': // positive x-axis
-                        this->player.direction = (Vector3) { 1.0f, 0.0f, 0.0f };
+                        this->player.player.direction = (Vector3) { 1.0f, 0.0f, 0.0f };
                         break;
                     case 'v': // positive z-axis
-                        this->player.direction = (Vector3) { 0.0f, 0.0f, 1.0f };
+                        this->player.player.direction = (Vector3) { 0.0f, 0.0f, 1.0f };
                         break;
                     case '^': // negative z-axis
-                        this->player.direction = (Vector3) { 0.0f, 0.0f, -1.0f };
+                        this->player.player.direction = (Vector3) { 0.0f, 0.0f, -1.0f };
                         break;
                 }
-                this->player.camera.position.x = x;
-                this->player.camera.position.z = z;
-                this->player.camera.target = Vector3Add(this->player.camera.position, this->player.direction);
-                this->player.hitbox = 
-                    CreateHitbox(this->player.camera.position, this->player.size, this->player.hitboxPadding);
+                this->player.player.camera.target = Vector3Add(this->player.position, this->player.player.direction);
             } else if ((char)ch == 'e') { // enemy
-                // TODO: reduce the size of the enemies and change position.y so that the enemies touch the ground
-                this->enemies[enemyIdx] = (Enemy) {
+                this->entities[this->numEntities] = (Entity) {
+                    .type     = ENTITY_ENEMY,
                     .position = { x, 0.0f, z },
-                    .size = { 8.0f, 10.0f, 8.0f },
-                    .color = RED,
-                    .health = 10.0f,
+                    .size     = { 6.0f, 6.0f, 6.0f },
+                    .color    = RED,
+                    .hitboxPadding = Vector3Zero(),
+                    .enemy = {
+                        .health = 10.0f,
+                    },
                 };
-                this->enemies[enemyIdx].hitbox =
-                    CreateHitbox(this->enemies[enemyIdx].position, this->enemies[enemyIdx].size, Vector3Zero());
+                this->entities[this->numEntities].hitbox = CreateHitbox(this->entities[this->numEntities].position, this->entities[this->numEntities].size, this->entities[this->numEntities].hitboxPadding);
 
-                ++enemyIdx;
+                ++this->numEnemies;
+                ++this->numEntities;
             }
 
             x += 10.0f;
         }
     }
     this->mapLayout[fileSize] = '\0';
-    this->wallsNum = wallIdx;
-    this->enemiesNum = enemyIdx;
 
-    void* temp = malloc(this->wallsNum * sizeof(Wall));
-    memcpy(temp, this->walls, this->wallsNum * sizeof(Wall));
-    free(this->walls);
-    this->walls = (Wall*)temp;
-    temp = NULL;
-
-    temp = malloc(this->enemiesNum * sizeof(Enemy));
-    memcpy(temp, this->enemies, this->enemiesNum * sizeof(Enemy));
-    free(this->enemies);
-    this->enemies = (Enemy*)temp;
+    size_t bytes = this->numEntities * sizeof(Entity);
+    Entity* temp = (Entity*)malloc(bytes);
+    memcpy(temp, this->entities, bytes);
+    free(this->entities);
+    this->entities = temp;
     temp = NULL;
 
     if (fclose(fp) == EOF) {
-        printf("Error closing file: %s\n", path);
+        printf("Error closing file: %s\n", config->mapPath);
         exit(-1);
     }
 }

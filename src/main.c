@@ -5,8 +5,6 @@
 #include "types.h"
 #include "application.h"
 
-void UIDrawGuides(void);
-
 int main(void) {
     // TODO: hot reloading
     Config config = {
@@ -30,7 +28,7 @@ int main(void) {
 
         BeginMode3D(*app.camera);
 
-        UIDrawGuides();
+        // UIDrawGuides();
         app.OnUpdate(&app);
 
         EndMode3D();
@@ -43,11 +41,4 @@ int main(void) {
     app.Cleanup(&app);
     CloseWindow();
     return 0;
-}
-
-void UIDrawGuides(void) {
-    const float bounds = 1000.0f;
-    DrawLine3D((Vector3){ 0.0f, -bounds, 0.0f }, (Vector3){ 0.0f, bounds, 0.0f }, GREEN);
-    DrawLine3D((Vector3){ -bounds, 0.0f, 0.0f }, (Vector3){ bounds, 0.0f, 0.0f }, RED);
-    DrawLine3D((Vector3){ 0.0f, 0.0f, -bounds }, (Vector3){ 0.0f, 0.0f, bounds }, BLUE);
 }

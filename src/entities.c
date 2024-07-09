@@ -16,35 +16,37 @@ BoundingBox CreateHitbox(const Vector3 position, const Vector3 size, const Vecto
     };
 }
 
-void MovePlayer(Player* const player) {
+void MovePlayer(Entity* const player) {
     // W, A, S, D to move the player's position
-    float speed = player->speed;
+    float speed = player->player.speed;
     if (IsKeyDown(KEY_LEFT_SHIFT)) {
         speed *= 2.0f;
     }
     speed *= GetFrameTime();
 
     if (IsKeyDown(KEY_A)) { // left
-        CameraMoveRight(&player->camera, -speed, true);
+        CameraMoveRight(&player->player.camera, -speed, true);
     } else if (IsKeyDown(KEY_D)) { // right
-        CameraMoveRight(&player->camera, speed, true);
+        CameraMoveRight(&player->player.camera, speed, true);
     }
 
     if (IsKeyDown(KEY_W)) { // front
-        CameraMoveForward(&player->camera, speed, true);
+        CameraMoveForward(&player->player.camera, speed, true);
     } else if (IsKeyDown(KEY_S)) { // back
-        CameraMoveForward(&player->camera, -speed, true);
+        CameraMoveForward(&player->player.camera, -speed, true);
     }
 
     // move the mouse to look up/down/left/right
     const Vector2 delta = GetMouseDelta();
     const float sensitivity = 0.01f * GetFrameTime();
-    CameraPitch(&player->camera, -delta.y * sensitivity, true, false, false);
-    CameraYaw(&player->camera, -delta.x * sensitivity, false);
+    CameraPitch(&player->player.camera, -delta.y * sensitivity, true, false, false);
+    CameraYaw(&player->player.camera, -delta.x * sensitivity, false);
 
-    player->hitbox = CreateHitbox(player->camera.position, player->size, player->hitboxPadding);
+    player->position = player->player.camera.position;
+    player->hitbox = CreateHitbox(player->position, player->size, player->hitboxPadding);
 }
 
-void PlayerOnCollision(Player* const player, const CollisionState* const state) {
-    player->camera.position = state->position;
+void PlayerOnCollision(Entity* const player, const CollisionState* const state) {
+    player->position = state->position;
+    player->player.camera.position = player->position;
 }

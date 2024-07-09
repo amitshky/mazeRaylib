@@ -22,6 +22,7 @@ SRC_FILES="\
     src/application.c \
     src/camera.c \
     src/entities.c \
+    src/utils.c \
 "
 
 INCLUDE_DIR="\
