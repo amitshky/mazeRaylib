@@ -83,6 +83,7 @@ void OnUpdate(Application* const this) {
     bool isHit = false; // so that only one enemy is hit
     for (uint64_t i = 0; i < this->numEntities; ++i) {
         if (CheckCollisionBoxes(this->player.hitbox, this->entities[i].hitbox)) {
+            // TODO: fix camera turn on side collision
             PlayerOnCollision(&this->player, &state);
         }
 
@@ -172,7 +173,7 @@ void LoadMap(Application* const this, const Config* const config) {
             z += 10.f;
         } else {
             if ((char)ch == '#') { // wall
-                this->entities[this->numEntities] = (Entity) {
+                Entity e = (Entity) {
                     .type     = ENTITY_WALL,
                     .wall     = {},
                     .position = { x, 0.0f, z },
@@ -180,8 +181,9 @@ void LoadMap(Application* const this, const Config* const config) {
                     .color    = GetColor(0x291a59ff),
                     .hitboxPadding = Vector3Zero(),
                 };
-                this->entities[this->numEntities].hitbox = CreateHitbox(this->entities[this->numEntities].position, this->entities[this->numEntities].size, this->entities[this->numEntities].hitboxPadding);
+                e.hitbox = CreateHitbox(e.position, e.size, e.hitboxPadding);
 
+                this->entities[this->numEntities] = e;
                 ++this->numWalls;
                 ++this->numEntities;
             } else if ((char)ch == '>' || (char)ch == '<' || (char)ch == 'v' || (char)ch == '^') { // player
@@ -218,7 +220,7 @@ void LoadMap(Application* const this, const Config* const config) {
                 }
                 this->player.camera.target = Vector3Add(this->player.position, this->player.direction);
             } else if ((char)ch == 'e') { // enemy
-                this->entities[this->numEntities] = (Entity) {
+                Entity e = (Entity) {
                     .type     = ENTITY_ENEMY,
                     .position = { x, 0.0f, z },
                     .size     = { 6.0f, 6.0f, 6.0f },
@@ -228,8 +230,9 @@ void LoadMap(Application* const this, const Config* const config) {
                         .health = 10.0f,
                     },
                 };
-                this->entities[this->numEntities].hitbox = CreateHitbox(this->entities[this->numEntities].position, this->entities[this->numEntities].size, this->entities[this->numEntities].hitboxPadding);
+                e.hitbox = CreateHitbox(e.position, e.size, e.hitboxPadding);
 
+                this->entities[this->numEntities] = e;
                 ++this->numEnemies;
                 ++this->numEntities;
             }
