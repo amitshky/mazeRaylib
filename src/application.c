@@ -173,66 +173,14 @@ void LoadMap(Application* const this, const Config* const config) {
             z += 10.f;
         } else {
             if ((char)ch == '#') { // wall
-                Entity e = (Entity) {
-                    .type     = ENTITY_WALL,
-                    .wall     = {},
-                    .position = { x, 0.0f, z },
-                    .size     = { 10.0f, 10.0f, 10.0f },
-                    .color    = GetColor(0x291a59ff),
-                    .hitboxPadding = Vector3Zero(),
-                };
-                e.hitbox = CreateHitbox(e.position, e.size, e.hitboxPadding);
-
-                this->entities[this->numEntities] = e;
+                this->entities[this->numEntities] = InitWall((Vector3) { x, 0.0f, z });
                 ++this->numWalls;
                 ++this->numEntities;
             } else if ((char)ch == '>' || (char)ch == '<' || (char)ch == 'v' || (char)ch == '^') { // player
                 // the characters specify direction the player is facing
-                this->player = (Player) {
-                    .position = { x, 0.0f, z },
-                    .size = { 4.0f, 10.0f, 4.0f },
-                    .color = WHITE,
-                    .hitboxPadding = { 0.5f, 0.0f, 0.5f },
-                    .speed = 15.0f,
-                    .damageVal = 10.0f,
-                    .camera = {
-                        .position = this->player.position,
-                        .target   = { 0.0f, 0.0f, 0.0f },
-                        .up       = { 0.0f, 1.0f, 0.0f },
-                        .fovy     = config->fovy,
-                        .projection = CAMERA_PERSPECTIVE,
-                    },
-                };
-                this->player.hitbox = CreateHitbox(this->player.position, this->player.size, this->player.hitboxPadding);
-                switch ((char)ch) {
-                    case '<': // negative x-axis
-                        this->player.direction = (Vector3) { -1.0f, 0.0f, 0.0f };
-                        break;
-                    case '>': // positive x-axis
-                        this->player.direction = (Vector3) { 1.0f, 0.0f, 0.0f };
-                        break;
-                    case 'v': // positive z-axis
-                        this->player.direction = (Vector3) { 0.0f, 0.0f, 1.0f };
-                        break;
-                    case '^': // negative z-axis
-                        this->player.direction = (Vector3) { 0.0f, 0.0f, -1.0f };
-                        break;
-                }
-                this->player.camera.target = Vector3Add(this->player.position, this->player.direction);
+                this->player = InitPlayer((Vector3) { x, 0.0f, z }, config->fovy, (char)ch);
             } else if ((char)ch == 'e') { // enemy
-                Entity e = (Entity) {
-                    .type     = ENTITY_ENEMY,
-                    .position = { x, 0.0f, z },
-                    .size     = { 6.0f, 6.0f, 6.0f },
-                    .color    = RED,
-                    .hitboxPadding = Vector3Zero(),
-                    .enemy = {
-                        .health = 10.0f,
-                    },
-                };
-                e.hitbox = CreateHitbox(e.position, e.size, e.hitboxPadding);
-
-                this->entities[this->numEntities] = e;
+                this->entities[this->numEntities] = InitEnemy((Vector3) { x, 0.0f, z }, 10.0f);
                 ++this->numEnemies;
                 ++this->numEntities;
             }

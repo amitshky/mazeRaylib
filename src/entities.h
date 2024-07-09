@@ -45,5 +45,11 @@ typedef struct Entity {
 } Entity;
 
 BoundingBox CreateHitbox(const Vector3 position, const Vector3 size, const Vector3 padding);
+
+// `playerDirectionChar` - get this from the map file
+Player InitPlayer(const Vector3 position, const float fovy, const char playerDirectionChar);
 void MovePlayer(Player* const player);
 void PlayerOnCollision(Player* const player, const CollisionState* const state);
+
+Entity InitWall(const Vector3 position);
+Entity InitEnemy(const Vector3 position, const float health);
