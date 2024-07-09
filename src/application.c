@@ -80,26 +80,31 @@ void OnUpdate(Application* const this) {
             break;
     }
 
-    bool isHit = false; // so that only one enemy is hit
-    for (uint64_t i = 0; i < this->numEntities; ++i) {
-        if (CheckCollisionBoxes(this->player.hitbox, this->entities[i].hitbox)) {
-            // TODO: fix camera turn on side collision
-            PlayerOnCollision(&this->player, &state);
-        }
-
-        // press left mouse button to shoot
-        if (this->activeCamera == PLAYER_CAMERA && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+    // press left mouse button to shoot
+    if (this->activeCamera == PLAYER_CAMERA && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        for (uint64_t i = 0; i < this->numEntities; ++i) {
             Ray ray = {
                 .position = this->player.position,
                 .direction = GetCameraForward(&this->player.camera),
             };
 
             RayCollision hitInfo = GetRayCollisionBox(ray, this->entities[i].hitbox);
-            if (hitInfo.hit && !isHit && this->entities[i].type == ENTITY_ENEMY) {
-                // TODO: show health bar for a short duration
-                this->entities[i].enemy.health -= this->player.damageVal;
-                isHit = true;
+
+            if (hitInfo.hit) {
+                if (this->entities[i].type == ENTITY_WALL)
+                    break;
+                else if (this->entities[i].type == ENTITY_ENEMY) {
+                    this->entities[i].enemy.health -= this->player.damageVal;
+                    break;
+                }
             }
+        }
+    }
+
+    for (uint64_t i = 0; i < this->numEntities; ++i) {
+        if (CheckCollisionBoxes(this->player.hitbox, this->entities[i].hitbox)) {
+            // TODO: fix camera turn on side collision
+            PlayerOnCollision(&this->player, &state);
         }
 
         // remove the dead enemies
