@@ -28,7 +28,7 @@ void Init(Application* const this, const Config* const config) {
 
     this->LoadMap(this, config);
 
-    this->camera = &this->player.player.camera;
+    this->camera = &this->player.camera;
     this->activeCamera = PLAYER_CAMERA;
     HideCursor();
     DisableCursor();
@@ -57,7 +57,7 @@ void OnUpdate(Application* const this) {
                 break;
 
             case SCENE_CAMERA:
-                this->camera = &this->player.player.camera;
+                this->camera = &this->player.camera;
                 this->activeCamera = PLAYER_CAMERA;
                 HideCursor();
                 DisableCursor();
@@ -90,13 +90,13 @@ void OnUpdate(Application* const this) {
         if (this->activeCamera == PLAYER_CAMERA && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             Ray ray = {
                 .position = this->player.position,
-                .direction = GetCameraForward(&this->player.player.camera),
+                .direction = GetCameraForward(&this->player.camera),
             };
 
             RayCollision hitInfo = GetRayCollisionBox(ray, this->entities[i].hitbox);
             if (hitInfo.hit && !isHit && this->entities[i].type == ENTITY_ENEMY) {
                 // TODO: show health bar for a short duration
-                this->entities[i].enemy.health -= this->player.player.damageVal;
+                this->entities[i].enemy.health -= this->player.damageVal;
                 isHit = true;
             }
         }
@@ -116,8 +116,10 @@ void OnUpdate(Application* const this) {
         DrawBoundingBox(this->entities[i].hitbox, BLUE);
     }
 
-    // DrawCubeV(this->player.camera.position, this->player.size, this->player.color);
-    DrawBoundingBox(this->player.hitbox, GREEN);
+    if (this->activeCamera == SCENE_CAMERA) {
+        DrawCubeV(this->player.position, this->player.size, this->player.color);
+        DrawBoundingBox(this->player.hitbox, GREEN);
+    }
 }
 
 void UpdateOverlay(Application* const this) {
@@ -184,15 +186,11 @@ void LoadMap(Application* const this, const Config* const config) {
                 ++this->numEntities;
             } else if ((char)ch == '>' || (char)ch == '<' || (char)ch == 'v' || (char)ch == '^') { // player
                 // the characters specify direction the player is facing
-                this->player = (Entity) {
-                    .type = ENTITY_PLAYER,
+                this->player = (Player) {
                     .position = { x, 0.0f, z },
                     .size = { 4.0f, 10.0f, 4.0f },
                     .color = WHITE,
                     .hitboxPadding = { 0.5f, 0.0f, 0.5f },
-                };
-                this->player.hitbox = CreateHitbox(this->player.position, this->player.size, this->player.hitboxPadding);
-                this->player.player = (Player) {
                     .speed = 15.0f,
                     .damageVal = 10.0f,
                     .camera = {
@@ -203,21 +201,22 @@ void LoadMap(Application* const this, const Config* const config) {
                         .projection = CAMERA_PERSPECTIVE,
                     },
                 };
+                this->player.hitbox = CreateHitbox(this->player.position, this->player.size, this->player.hitboxPadding);
                 switch ((char)ch) {
                     case '<': // negative x-axis
-                        this->player.player.direction = (Vector3) { -1.0f, 0.0f, 0.0f };
+                        this->player.direction = (Vector3) { -1.0f, 0.0f, 0.0f };
                         break;
                     case '>': // positive x-axis
-                        this->player.player.direction = (Vector3) { 1.0f, 0.0f, 0.0f };
+                        this->player.direction = (Vector3) { 1.0f, 0.0f, 0.0f };
                         break;
                     case 'v': // positive z-axis
-                        this->player.player.direction = (Vector3) { 0.0f, 0.0f, 1.0f };
+                        this->player.direction = (Vector3) { 0.0f, 0.0f, 1.0f };
                         break;
                     case '^': // negative z-axis
-                        this->player.player.direction = (Vector3) { 0.0f, 0.0f, -1.0f };
+                        this->player.direction = (Vector3) { 0.0f, 0.0f, -1.0f };
                         break;
                 }
-                this->player.player.camera.target = Vector3Add(this->player.position, this->player.player.direction);
+                this->player.camera.target = Vector3Add(this->player.position, this->player.direction);
             } else if ((char)ch == 'e') { // enemy
                 this->entities[this->numEntities] = (Entity) {
                     .type     = ENTITY_ENEMY,

@@ -27,7 +27,7 @@ typedef struct Application {
 
     // initialized in `LoadMap` function
     char* mapLayout;
-    Entity player;
+    Player player;
     Entity* entities; // list of walls and enemies
     uint64_t numEntities;
     uint64_t numWalls;
