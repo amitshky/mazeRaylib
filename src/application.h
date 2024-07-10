@@ -19,6 +19,7 @@ typedef struct Application {
 
     void (*LoadMap)(struct Application* const this, const Config* const config);
     void (*ControlCamera)(Camera3D* const camera);
+    void (*ToggleActiveCamera)(struct Application* this);
 
     // variables
     Camera3D* camera; // active camera
@@ -41,13 +42,15 @@ void UpdateOverlay(Application* const this);
 
 void LoadMap(Application* const this, const Config* const config);
 void ControlCamera(Camera3D* const camera);
+void ToggleActiveCamera(Application* this);
 
 #define CREATE_APPLICATION() (Application) { \
     .Init = Init, \
     .Cleanup = Cleanup, \
     .Update = Update, \
+    .UpdateOverlay = UpdateOverlay, \
     .LoadMap = LoadMap, \
     .ControlCamera = ControlCamera, \
-    .UpdateOverlay = UpdateOverlay, \
+    .ToggleActiveCamera = ToggleActiveCamera, \
 }
 

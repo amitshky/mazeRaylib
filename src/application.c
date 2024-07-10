@@ -29,10 +29,9 @@ void Init(Application* const this, const Config* const config) {
 
     this->LoadMap(this, config);
 
-    this->camera = &this->player.camera;
-    this->activeCamera = PLAYER_CAMERA;
-    HideCursor();
-    DisableCursor();
+    // this will be toggled to PLAYER_CAMERA
+    this->activeCamera = SCENE_CAMERA;
+    this->ToggleActiveCamera(this);
 }
 
 void Cleanup(Application* const this) {
@@ -49,21 +48,7 @@ void Cleanup(Application* const this) {
 void Update(Application* const this) {
     // switch camera on `tab` key press
     if (IsKeyPressed(KEY_TAB)) {
-        switch (this->activeCamera) {
-            case PLAYER_CAMERA:
-                this->camera = &this->sceneCamera;
-                this->activeCamera = SCENE_CAMERA;
-                ShowCursor();
-                EnableCursor();
-                break;
-
-            case SCENE_CAMERA:
-                this->camera = &this->player.camera;
-                this->activeCamera = PLAYER_CAMERA;
-                HideCursor();
-                DisableCursor();
-                break;
-        }
+        this->ToggleActiveCamera(this);
     }
 
     // set state before collision
@@ -94,7 +79,6 @@ void Update(Application* const this) {
 
         for (uint64_t i = 0; i < this->numEntities; ++i) {
             RayCollision hitInfo = GetRayCollisionBox(ray, this->entities[i].hitbox);
-
             if (hitInfo.hit && hitInfo.distance <= minDistance) {
                 minDistance = hitInfo.distance;
                 pEntity = &this->entities[i];
@@ -233,4 +217,22 @@ void ControlCamera(Camera3D* const camera) {
         CameraPan(camera);
     else if (IsMouseButtonDown(MOUSE_BUTTON_MIDDLE))
         CameraOrbit(camera);
+}
+
+void ToggleActiveCamera(Application* this) {
+    switch (this->activeCamera) {
+        case PLAYER_CAMERA:
+            this->camera = &this->sceneCamera;
+            this->activeCamera = SCENE_CAMERA;
+            ShowCursor();
+            EnableCursor();
+            break;
+
+        case SCENE_CAMERA:
+            this->camera = &this->player.camera;
+            this->activeCamera = PLAYER_CAMERA;
+            HideCursor();
+            DisableCursor();
+            break;
+    }
 }
