@@ -7,13 +7,13 @@
 
 int main(void) {
     // TODO: hot reloading
-    // TODO: draw ui (settings, restart, quit, etc)
+    // TODO: draw ui (win screen, settings, restart, quit, etc)
     // TODO: map at the top left corner
     Config config = {
         .width = 640,
         .height = 640,
         .title = "Maze",
-        .mapPath = "assets/map/box.txt",
+        .mapPath = "assets/map/map1.txt",
         .fovy = 45.0f,
     };
 

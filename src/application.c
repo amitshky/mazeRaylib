@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <float.h>
 #include <math.h>
 #include "rcamera.h"
 #include "raymath.h"
@@ -82,40 +83,45 @@ void Update(Application* const this) {
 
     // press left mouse button to shoot
     if (this->activeCamera == PLAYER_CAMERA && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        for (uint64_t i = 0; i < this->numEntities; ++i) {
-            Ray ray = {
-                .position = this->player.position,
-                .direction = GetCameraForward(&this->player.camera),
-            };
+        float minDistance = FLT_MAX; // to hit the closest enemy
+        Entity* pEntity = NULL;
+        uint64_t entityIdx = 0; // index of the entity hit
 
+        Ray ray = {
+            .position = this->player.position,
+            .direction = GetCameraForward(&this->player.camera),
+        };
+
+        for (uint64_t i = 0; i < this->numEntities; ++i) {
             RayCollision hitInfo = GetRayCollisionBox(ray, this->entities[i].hitbox);
 
-            if (hitInfo.hit) {
-                if (this->entities[i].type == ENTITY_WALL)
-                    break;
-                else if (this->entities[i].type == ENTITY_ENEMY) {
-                    this->entities[i].enemy.health -= this->player.damageVal;
-                    break;
+            if (hitInfo.hit && hitInfo.distance <= minDistance) {
+                minDistance = hitInfo.distance;
+                pEntity = &this->entities[i];
+                entityIdx = i;
+            }
+        }
+
+        if (minDistance != FLT_MAX && pEntity->type == ENTITY_ENEMY) {
+            pEntity->enemy.health -= this->player.damageVal;
+            // remove the dead enemies
+            if (pEntity->enemy.health <= 0.0f) {
+                for (uint64_t i = entityIdx; i < this->numEntities; ++i) {
+                    if (i + 1 < this->numEntities) {
+                        this->entities[i] = this->entities[i + 1];
+                    }
                 }
+                --this->numEnemies;
+                --this->numEntities;
             }
         }
     }
 
+    // render entities and check player collision
     for (uint64_t i = 0; i < this->numEntities; ++i) {
         if (CheckCollisionBoxes(this->player.hitbox, this->entities[i].hitbox)) {
-            // TODO: fix camera turn on side collision
+            // FIXME: fix camera turn on side collision
             PlayerOnCollision(&this->player, &state);
-        }
-
-        // remove the dead enemies
-        if (this->entities[i].type == ENTITY_ENEMY && this->entities[i].enemy.health <= 0.0f) {
-            for (uint64_t j = i; j < this->numEntities; ++j) {
-                if (j + 1 < this->numEntities) {
-                    this->entities[j] = this->entities[j + 1];
-                }
-            }
-            --this->numEnemies;
-            --this->numEntities;
         }
 
         DrawCubeV(this->entities[i].position, this->entities[i].size, this->entities[i].color);
@@ -151,7 +157,7 @@ void LoadMap(Application* const this, const Config* const config) {
     FILE* fp = fopen(config->mapPath, "r");
     if (fp == NULL)
     {
-        printf("Error opening file: %s\n", config->mapPath);
+        fprintf(stderr, "Error opening file: %s\n", config->mapPath);
         exit(-1);
     }
 
@@ -208,7 +214,7 @@ void LoadMap(Application* const this, const Config* const config) {
     temp = NULL;
 
     if (fclose(fp) == EOF) {
-        printf("Error closing file: %s\n", config->mapPath);
+        fprintf(stderr, "Error closing file: %s\n", config->mapPath);
         exit(-1);
     }
 }
