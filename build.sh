@@ -22,6 +22,7 @@ SRC_FILES="\
 
 INCLUDE_DIR="\
     -I ext/raylib/src/ \
+    -I ext/raylib/src/external/glfw/include/ \
     -I src/ \
 "
 

@@ -5,6 +5,7 @@
 #include <string.h>
 #include <float.h>
 #include <math.h>
+#include <GLFW/glfw3.h>
 #include "rcamera.h"
 #include "raymath.h"
 
@@ -13,13 +14,8 @@
 
 
 void Init(Application* const this, const Config* const config) {
-    this->sceneCamera = (Camera3D) {
-        .position = { 75.0f, 200.0f, 76.5f },
-        .target   = { 75.0f,   0.0f, 75.5f },
-        .up       = {  0.0f,   1.0f,  0.0f },
-        .fovy     = config->fovy,
-        .projection = CAMERA_PERSPECTIVE,
-    };
+    this->gameState = GAME;
+    this->pauseScreenLoaded = false;
 
     this->mapLayout = NULL;
     this->entities = NULL;
@@ -28,6 +24,14 @@ void Init(Application* const this, const Config* const config) {
     this->numEnemies = 0;
 
     this->LoadMap(this, config);
+
+    this->sceneCamera = (Camera3D) {
+        .position = { 75.0f, 200.0f, 76.5f },
+        .target   = { 75.0f,   0.0f, 75.5f },
+        .up       = {  0.0f,   1.0f,  0.0f },
+        .fovy     = config->fovy,
+        .projection = CAMERA_PERSPECTIVE,
+    };
 
     // this will be toggled to PLAYER_CAMERA
     this->activeCamera = SCENE_CAMERA;
@@ -46,6 +50,42 @@ void Cleanup(Application* const this) {
 }
 
 void Update(Application* const this) {
+    switch (this->gameState) {
+        case GAME:
+            this->UpdateGame(this);
+            break;
+
+        default:
+            this->UpdateOverlay(this);
+            break;
+    }
+}
+
+void UpdateOverlay(Application* const this) {
+    switch (this->gameState) {
+        case GAME:
+            // render number of enemies remaining
+            char text[255] = {};
+            sprintf(text, "Enemies remaining: %lu", this->numEnemies);
+            DrawText(text, 10, 32, 20, WHITE);
+            if (this->activeCamera == PLAYER_CAMERA) {
+                DrawCrosshair();
+            }
+            break;
+
+        case PAUSE:
+            this->UpdatePauseScreen(this);
+            break;
+
+        case END:
+            this->UpdateEndScreen(this);
+            break;
+    }
+    if (this->gameState == GAME) {
+    }
+}
+
+void UpdateGame(Application* const this) {
     // switch camera on `tab` key press
     if (IsKeyPressed(KEY_TAB)) {
         this->ToggleActiveCamera(this);
@@ -121,16 +161,51 @@ void Update(Application* const this) {
         DrawCubeV(this->player.position, this->player.size, this->player.color);
         DrawBoundingBox(this->player.hitbox, GREEN);
     }
+
+    if (this->numEnemies == 0) {
+        this->gameState = END;
+    }
+
+    this->pauseScreenLoaded = false;
+    if (IsKeyReleased(KEY_ESCAPE)) {
+        this->gameState = PAUSE;
+    }
 }
 
-void UpdateOverlay(Application* const this) {
-    // render number of enemies remaining
-    char text[255] = {};
-    sprintf(text, "Enemies remaining: %lu", this->numEnemies);
-    DrawText(text, 10, 32, 20, WHITE);
+void UpdatePauseScreen(Application* const this) {
+    ClearBackground(MENU_BG_COLOR);
+    const int yPos = 50;
+    int count = 1;
+    DrawText("GAME PAUSED!", 10, yPos * (count++), 30, WHITE);
+    DrawText("- Restart <R>", 15, yPos * (count++), 25, WHITE);
+    DrawText("- Quit <Q>", 15, yPos * (count++), 25, WHITE);
 
-    if (this->activeCamera == PLAYER_CAMERA) {
-        DrawCrosshair();
+    // let pause screen load so as to not overlap ESCAPE key pressed to open pause screen
+    if (this->pauseScreenLoaded) {
+        if (IsKeyReleased(KEY_ESCAPE)) {
+            this->gameState = GAME;
+        } else if (IsKeyPressed(KEY_R)) {
+            // TODO: restart game
+        } else if (IsKeyPressed(KEY_Q)) {
+            glfwSetWindowShouldClose(GetWindowHandle(), 1);
+        }
+    }
+
+    this->pauseScreenLoaded = true;
+}
+
+void UpdateEndScreen(Application* const /* this */) {
+    ClearBackground(MENU_BG_COLOR);
+    const int yPos = 50;
+    int count = 1;
+    DrawText("LEVEL COMPLETED!", 10, yPos * (count++), 30, WHITE);
+    DrawText("- Restart <R>", 15, yPos * (count++), 25, WHITE);
+    DrawText("- Quit <Q>", 15, yPos * (count++), 25, WHITE);
+
+    if (IsKeyPressed(KEY_R)) {
+        // TODO: restart game
+    } else if (IsKeyPressed(KEY_Q)) {
+        glfwSetWindowShouldClose(GetWindowHandle(), 1);
     }
 }
 
@@ -190,6 +265,7 @@ void LoadMap(Application* const this, const Config* const config) {
     }
     this->mapLayout[fileSize] = '\0';
 
+    // reallocate with actual num of entities
     size_t bytes = this->numEntities * sizeof(Entity);
     Entity* temp = (Entity*)malloc(bytes);
     memcpy(temp, this->entities, bytes);
@@ -219,7 +295,7 @@ void ControlCamera(Camera3D* const camera) {
         CameraOrbit(camera);
 }
 
-void ToggleActiveCamera(Application* this) {
+void ToggleActiveCamera(Application* const this) {
     switch (this->activeCamera) {
         case PLAYER_CAMERA:
             this->camera = &this->sceneCamera;

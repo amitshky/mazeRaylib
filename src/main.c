@@ -3,7 +3,9 @@
 #include <stdint.h>
 #include "raylib.h"
 #include "types.h"
+#include "utils.h"
 #include "application.h"
+
 
 int main(void) {
     // TODO: hot reloading
@@ -13,12 +15,13 @@ int main(void) {
         .width = 640,
         .height = 640,
         .title = "Maze",
-        .mapPath = "assets/map/map1.txt",
+        .mapPath = "assets/map/box.txt",
         .fovy = 45.0f,
     };
 
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(config.width, config.height, config.title);
+    SetExitKey(KEY_NULL);
     SetTargetFPS(60);
 
     Application app = CREATE_APPLICATION();
