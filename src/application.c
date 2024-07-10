@@ -119,7 +119,12 @@ void OnUpdate(Application* const this) {
         }
 
         DrawCubeV(this->entities[i].position, this->entities[i].size, this->entities[i].color);
-        DrawBoundingBox(this->entities[i].hitbox, BLUE);
+        if (this->activeCamera == SCENE_CAMERA) {
+            DrawBoundingBox(this->entities[i].hitbox, GREEN);
+        } else if (this->activeCamera == PLAYER_CAMERA) {
+            DrawCubeWiresV(this->entities[i].position, this->entities[i].size, BLUE);
+        }
+
     }
 
     if (this->activeCamera == SCENE_CAMERA) {
