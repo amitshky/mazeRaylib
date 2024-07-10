@@ -7,6 +7,8 @@
 
 int main(void) {
     // TODO: hot reloading
+    // TODO: draw ui (settings, restart, quit, etc)
+    // TODO: map at the top left corner
     Config config = {
         .width = 640,
         .height = 640,
@@ -29,7 +31,7 @@ int main(void) {
         BeginMode3D(*app.camera);
 
         // UIDrawGuides();
-        app.OnUpdate(&app);
+        app.Update(&app);
 
         EndMode3D();
 

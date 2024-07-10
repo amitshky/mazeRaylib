@@ -45,7 +45,7 @@ void Cleanup(Application* const this) {
     this->numEnemies = 0;
 }
 
-void OnUpdate(Application* const this) {
+void Update(Application* const this) {
     // switch camera on `tab` key press
     if (IsKeyPressed(KEY_TAB)) {
         switch (this->activeCamera) {
