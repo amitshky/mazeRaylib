@@ -208,8 +208,8 @@ void UpdateEndScreen(Application* const this) {
     DrawText("- Quit <Q>", 10, yPos * (count++), 25, WHITE);
 
     if (IsKeyPressed(KEY_R)) {
-            this->gameState = GAME;
-            this->ParseMap(this);
+        this->gameState = GAME;
+        this->ParseMap(this);
     } else if (IsKeyPressed(KEY_Q)) {
         glfwSetWindowShouldClose(GetWindowHandle(), 1);
     }
