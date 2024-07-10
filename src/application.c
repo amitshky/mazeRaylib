@@ -13,23 +13,25 @@
 #include "utils.h"
 
 
-void Init(Application* const this, const Config* const config) {
+void Init(Application* const this, const Config config) {
+    this->config = config;
     this->gameState = GAME;
     this->pauseScreenLoaded = false;
 
     this->mapLayout = NULL;
     this->entities = NULL;
+    this->numMapLayout = 0;
     this->numEntities = 0;
     this->numWalls = 0;
     this->numEnemies = 0;
 
-    this->LoadMap(this, config);
+    this->LoadMap(this);
 
     this->sceneCamera = (Camera3D) {
         .position = { 75.0f, 200.0f, 76.5f },
         .target   = { 75.0f,   0.0f, 75.5f },
         .up       = {  0.0f,   1.0f,  0.0f },
-        .fovy     = config->fovy,
+        .fovy     = this->config.fovy,
         .projection = CAMERA_PERSPECTIVE,
     };
 
@@ -41,6 +43,7 @@ void Init(Application* const this, const Config* const config) {
 void Cleanup(Application* const this) {
     free(this->mapLayout);
     this->mapLayout = NULL;
+    this->numMapLayout = 0;
 
     free(this->entities);
     this->entities = NULL;
@@ -177,15 +180,17 @@ void UpdatePauseScreen(Application* const this) {
     const int yPos = 50;
     int count = 1;
     DrawText("GAME PAUSED!", 10, yPos * (count++), 30, WHITE);
-    DrawText("- Restart <R>", 15, yPos * (count++), 25, WHITE);
-    DrawText("- Quit <Q>", 15, yPos * (count++), 25, WHITE);
+    DrawText("- Resume <Esc>", 10, yPos * (count++), 25, WHITE);
+    DrawText("- Restart <R>", 10, yPos * (count++), 25, WHITE);
+    DrawText("- Quit <Q>", 10, yPos * (count++), 25, WHITE);
 
     // let pause screen load so as to not overlap ESCAPE key pressed to open pause screen
     if (this->pauseScreenLoaded) {
         if (IsKeyReleased(KEY_ESCAPE)) {
             this->gameState = GAME;
         } else if (IsKeyPressed(KEY_R)) {
-            // TODO: restart game
+            this->gameState = GAME;
+            this->ParseMap(this);
         } else if (IsKeyPressed(KEY_Q)) {
             glfwSetWindowShouldClose(GetWindowHandle(), 1);
         }
@@ -194,16 +199,17 @@ void UpdatePauseScreen(Application* const this) {
     this->pauseScreenLoaded = true;
 }
 
-void UpdateEndScreen(Application* const /* this */) {
+void UpdateEndScreen(Application* const this) {
     ClearBackground(MENU_BG_COLOR);
     const int yPos = 50;
     int count = 1;
     DrawText("LEVEL COMPLETED!", 10, yPos * (count++), 30, WHITE);
-    DrawText("- Restart <R>", 15, yPos * (count++), 25, WHITE);
-    DrawText("- Quit <Q>", 15, yPos * (count++), 25, WHITE);
+    DrawText("- Restart <R>", 10, yPos * (count++), 25, WHITE);
+    DrawText("- Quit <Q>", 10, yPos * (count++), 25, WHITE);
 
     if (IsKeyPressed(KEY_R)) {
-        // TODO: restart game
+            this->gameState = GAME;
+            this->ParseMap(this);
     } else if (IsKeyPressed(KEY_Q)) {
         glfwSetWindowShouldClose(GetWindowHandle(), 1);
     }
@@ -212,11 +218,11 @@ void UpdateEndScreen(Application* const /* this */) {
 /**
  * loads map from file
  */
-void LoadMap(Application* const this, const Config* const config) {
-    FILE* fp = fopen(config->mapPath, "r");
+void LoadMap(Application* const this) {
+    FILE* fp = fopen(this->config.mapPath, "r");
     if (fp == NULL)
     {
-        fprintf(stderr, "Error opening file: %s\n", config->mapPath);
+        fprintf(stderr, "Error opening file: %s\n", this->config.mapPath);
         exit(-1);
     }
 
@@ -225,48 +231,18 @@ void LoadMap(Application* const this, const Config* const config) {
     fseek(fp, 0l, 0); // seek to the start of the file
 
     this->mapLayout = (char*)malloc((fileSize + 1) * sizeof(char));
+    fread(this->mapLayout, sizeof(char), fileSize, fp);
+    this->mapLayout[fileSize] = '\0';
+
+    this->numMapLayout = fileSize + 1;
 
     // reallocated later
     this->entities = (Entity*)malloc(fileSize * sizeof(Entity));
 
-    // to keep count
-    this->numEntities = 0;
-    this->numEnemies = 0;
-    this->numWalls = 0;
-    // for player, enemy, etc position
-    float x = 0.0f;
-    float z = 0.0f;
-    for (uint64_t i = 0; i < fileSize; ++i) {
-        int ch = fgetc(fp);
-        if (ch == EOF)
-            break;
-
-        this->mapLayout[i] = (char)ch;
-
-        if ((char)ch == '\n') {
-            x = 0.0f;
-            z += 10.f;
-        } else {
-            if ((char)ch == '#') { // wall
-                this->entities[this->numEntities] = InitWall((Vector3) { x, 0.0f, z });
-                ++this->numWalls;
-                ++this->numEntities;
-            } else if ((char)ch == '>' || (char)ch == '<' || (char)ch == 'v' || (char)ch == '^') { // player
-                // the characters specify direction the player is facing
-                this->player = InitPlayer((Vector3) { x, 0.0f, z }, config->fovy, (char)ch);
-            } else if ((char)ch == 'e') { // enemy
-                this->entities[this->numEntities] = InitEnemy((Vector3) { x, 0.0f, z }, 10.0f);
-                ++this->numEnemies;
-                ++this->numEntities;
-            }
-
-            x += 10.0f;
-        }
-    }
-    this->mapLayout[fileSize] = '\0';
+    this->ParseMap(this);
 
     // reallocate with actual num of entities
-    size_t bytes = this->numEntities * sizeof(Entity);
+    const size_t bytes = this->numEntities * sizeof(Entity);
     Entity* temp = (Entity*)malloc(bytes);
     memcpy(temp, this->entities, bytes);
     free(this->entities);
@@ -274,18 +250,51 @@ void LoadMap(Application* const this, const Config* const config) {
     temp = NULL;
 
     if (fclose(fp) == EOF) {
-        fprintf(stderr, "Error closing file: %s\n", config->mapPath);
+        fprintf(stderr, "Error closing file: %s\n", this->config.mapPath);
         exit(-1);
+    }
+}
+
+void ParseMap(Application* const this) {
+    // to keep count
+    this->numEntities = 0;
+    this->numEnemies = 0;
+    this->numWalls = 0;
+    // for player, enemy, etc position
+    float x = 0.0f;
+    float z = 0.0f;
+    for (uint64_t i = 0; i < this->numMapLayout; ++i) {
+        char ch = this->mapLayout[i];
+        if (ch == '\0') {
+            break;
+        } else if (ch == '\n') {
+            x = 0.0f;
+            z += 10.f;
+        } else {
+            if (ch == '#') { // wall
+                this->entities[this->numEntities] = InitWall((Vector3) { x, 0.0f, z });
+                ++this->numWalls;
+                ++this->numEntities;
+            } else if (ch == '>' || ch == '<' || ch == 'v' || ch == '^') { // player
+                // the characters specify direction the player is facing
+                this->player = InitPlayer((Vector3) { x, 0.0f, z }, this->config.fovy, ch);
+            } else if (ch == 'e') { // enemy
+                this->entities[this->numEntities] = InitEnemy((Vector3) { x, 0.0f, z }, 10.0f);
+                ++this->numEnemies;
+                ++this->numEntities;
+            }
+            x += 10.0f;
+        }
     }
 }
 
 void ControlCamera(Camera3D* const camera) {
     // press and hold the right mouse button or middle to move the camera
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) || IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) {
-        HideCursor();
+        ShowCursor();
         DisableCursor();
     } else if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) || IsMouseButtonReleased(MOUSE_BUTTON_MIDDLE)) {
-        ShowCursor();
+        HideCursor();
         EnableCursor();
     }
 

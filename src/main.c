@@ -25,7 +25,7 @@ int main(void) {
     SetTargetFPS(60);
 
     Application app = CREATE_APPLICATION();
-    app.Init(&app, &config);
+    app.Init(&app, config);
 
     while (!WindowShouldClose()) {
         BeginDrawing();

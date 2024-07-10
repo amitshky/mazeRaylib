@@ -22,12 +22,13 @@ typedef enum ActiveCamera {
 
 typedef struct Application {
     // methods
-    void (*Init)(struct Application* const this, const Config* const config);
+    void (*Init)(struct Application* const this, const Config config);
     void (*Cleanup)(struct Application* const this);
     void (*Update)(struct Application* const this);
     void (*UpdateOverlay)(struct Application* const this);
 
-    void (*LoadMap)(struct Application* const this, const Config* const config);
+    void (*LoadMap)(struct Application* const this);
+    void (*ParseMap)(struct Application* const this);
     void (*ControlCamera)(Camera3D* const camera);
     void (*ToggleActiveCamera)(struct Application* const this);
 
@@ -42,9 +43,11 @@ typedef struct Application {
     Camera3D sceneCamera;
 
     bool pauseScreenLoaded; // to prevent keypresses from overlapping
+    Config config;
 
     // initialized in `LoadMap` function
     char* mapLayout;
+    uint64_t numMapLayout;
     Player player;
     Entity* entities; // list of walls and enemies
     uint64_t numEntities;
@@ -52,12 +55,13 @@ typedef struct Application {
     uint64_t numEnemies;
 } Application;
 
-void Init(Application* const this, const Config* const config);
+void Init(Application* const this, const Config config);
 void Cleanup(Application* const this);
 void Update(Application* const this);
 void UpdateOverlay(Application* const this);
 
-void LoadMap(Application* const this, const Config* const config);
+void LoadMap(Application* const this);
+void ParseMap(Application* const this);
 void ControlCamera(Camera3D* const camera);
 void ToggleActiveCamera(Application* const this);
 
@@ -71,6 +75,7 @@ void UpdateEndScreen(Application* const this);
     .Update = Update, \
     .UpdateOverlay = UpdateOverlay, \
     .LoadMap = LoadMap, \
+    .ParseMap = ParseMap, \
     .ControlCamera = ControlCamera, \
     .ToggleActiveCamera = ToggleActiveCamera, \
     .UpdateGame = UpdateGame, \
