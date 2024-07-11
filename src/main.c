@@ -6,11 +6,13 @@
 #include "utils.h"
 #include "application.h"
 
+    // TODO: hot reloading
+    // TODO: draw ui settings (mouse sensitivity, movement speed)
+    // TODO: map at the top left corner
+    // TODO: swtich/pick levels
+    // TODO: enemies shoot at you
 
 int main(void) {
-    // TODO: hot reloading
-    // TODO: draw ui (win screen, settings, restart, quit, etc)
-    // TODO: map at the top left corner
     Config config = {
         .width = 640,
         .height = 640,
