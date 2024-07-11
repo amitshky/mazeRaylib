@@ -15,3 +15,13 @@ typedef struct Config {
 typedef struct CollisionState {
     Vector3 position;
 } CollisionState;
+
+typedef struct Button {
+    const char* text;
+    Vector2 position;
+    Vector2 size;
+    int fontSize;
+    Color fgColor;
+    Color bgColor;
+    Color borderColor;
+} Button;

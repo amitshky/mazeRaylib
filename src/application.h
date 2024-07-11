@@ -5,7 +5,8 @@
 #include "types.h"
 #include "entities.h"
 
-#define MENU_BG_COLOR GetColor(0x475c7fff)
+// #define MENU_BG_COLOR GetColor(0x475c7fff)
+#define MENU_BG_COLOR GetColor(0x82a7aaff)
 
 
 typedef enum GameState {

@@ -55,12 +55,24 @@ void Cleanup(Application* const this) {
 void Update(Application* const this) {
     switch (this->gameState) {
         case GAME:
+            if (!IsCursorHidden()) {
+                HideCursor();
+                DisableCursor();
+            }
             this->UpdateGame(this);
             break;
 
-        default:
-            this->UpdateOverlay(this);
+        default: // go to other screens (pause, end)
+            if (IsCursorHidden()) {
+                ShowCursor();
+                EnableCursor();
+            }
             break;
+    }
+
+    // exit on Left CTRL+Q
+    if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_Q)) {
+        glfwSetWindowShouldClose(GetWindowHandle(), 1);
     }
 }
 
@@ -83,8 +95,6 @@ void UpdateOverlay(Application* const this) {
         case END:
             this->UpdateEndScreen(this);
             break;
-    }
-    if (this->gameState == GAME) {
     }
 }
 
@@ -157,7 +167,6 @@ void UpdateGame(Application* const this) {
         } else if (this->activeCamera == PLAYER_CAMERA) {
             DrawCubeWiresV(this->entities[i].position, this->entities[i].size, BLUE);
         }
-
     }
 
     if (this->activeCamera == SCENE_CAMERA) {
@@ -169,8 +178,8 @@ void UpdateGame(Application* const this) {
         this->gameState = END;
     }
 
-    this->pauseScreenLoaded = false;
     if (IsKeyReleased(KEY_ESCAPE)) {
+        this->pauseScreenLoaded = false;
         this->gameState = PAUSE;
     }
 }
@@ -184,11 +193,22 @@ void UpdatePauseScreen(Application* const this) {
     DrawText("- Restart <R>", 10, yPos * (count++), 25, WHITE);
     DrawText("- Quit <Q>", 10, yPos * (count++), 25, WHITE);
 
+    Button restartButton = { 
+        .text = "Restart <R>", 
+        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) }, 
+        .size = (Vector2) { 100, 40 }, 
+        .fontSize = 25, 
+        .fgColor = WHITE, 
+        .bgColor = GRAY, 
+        .borderColor = WHITE 
+    };
+    DrawButton(restartButton);
+
     // let pause screen load so as to not overlap ESCAPE key pressed to open pause screen
     if (this->pauseScreenLoaded) {
         if (IsKeyReleased(KEY_ESCAPE)) {
             this->gameState = GAME;
-        } else if (IsKeyPressed(KEY_R)) {
+        } else if (IsButtonClicked(restartButton) || IsKeyPressed(KEY_R)) {
             this->gameState = GAME;
             this->ParseMap(this);
         } else if (IsKeyPressed(KEY_Q)) {
@@ -291,10 +311,10 @@ void ParseMap(Application* const this) {
 void ControlCamera(Camera3D* const camera) {
     // press and hold the right mouse button or middle to move the camera
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) || IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) {
-        ShowCursor();
+        HideCursor();
         DisableCursor();
     } else if (IsMouseButtonReleased(MOUSE_BUTTON_RIGHT) || IsMouseButtonReleased(MOUSE_BUTTON_MIDDLE)) {
-        HideCursor();
+        ShowCursor();
         EnableCursor();
     }
 
