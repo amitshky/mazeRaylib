@@ -33,7 +33,6 @@ int main(void) {
 
         BeginMode3D(*app.camera);
 
-        // UIDrawGuides();
         app.Update(&app);
 
         EndMode3D();

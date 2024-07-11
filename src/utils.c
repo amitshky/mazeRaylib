@@ -1,7 +1,7 @@
 #include "utils.h"
 #include <stdio.h>
 
-void UIDrawGuides(void) {
+void DrawGuides(void) {
     const float bounds = 1000.0f;
     DrawLine3D((Vector3){ 0.0f, -bounds, 0.0f }, (Vector3){ 0.0f, bounds, 0.0f }, GREEN);
     DrawLine3D((Vector3){ -bounds, 0.0f, 0.0f }, (Vector3){ bounds, 0.0f, 0.0f }, RED);
@@ -29,7 +29,6 @@ void DrawCrosshair(void) {
     DrawRectangleV((Vector2) { widthHalf - centerRadius - length, heightHalf - breadthHalf           }, sizeHorz, color); // left
 }
 
-// TODO: make a button struct
 bool IsButtonHovered(Button button) {
     Vector2 mousePos = GetMousePosition();
     if (mousePos.x >= button.position.x && mousePos.x <= (button.position.x + button.size.x)
@@ -47,6 +46,11 @@ bool IsButtonClicked(Button button) {
 }
 
 void DrawButton(Button button) {
+    Vector2 padding = { 10.0f, 10.0f };
+    int fontSize = (int)(button.size.y - 2.0f * padding.y);
+    int textPosX = (int)(button.position.x + padding.x);
+    int textPosY = (int)(button.position.y + padding.y);
+
     if (IsButtonHovered(button)) {
         button.bgColor = ColorAlpha(button.bgColor, 0.6f);
         button.fgColor = ColorAlpha(button.fgColor, 0.8f);
@@ -54,5 +58,5 @@ void DrawButton(Button button) {
 
     DrawRectangleV(button.position, button.size, button.bgColor);
     DrawRectangleLines((int)button.position.x, (int)button.position.y, (int)button.size.x, (int)button.size.y, button.borderColor);
-    DrawText(button.text, (int)button.position.x, (int)button.position.y, button.fontSize, button.fgColor);
+    DrawText(button.text, textPosX, textPosY, fontSize, button.fgColor);
 }

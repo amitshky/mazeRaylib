@@ -5,7 +5,7 @@
 
 #define ARRAY_LEN(x) sizeof(x) / sizeof(x[0])
 
-void UIDrawGuides(void);
+void DrawGuides(void);
 void DrawCrosshair(void);
 
 // ui

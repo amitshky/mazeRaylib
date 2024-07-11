@@ -189,29 +189,46 @@ void UpdatePauseScreen(Application* const this) {
     const int yPos = 50;
     int count = 1;
     DrawText("GAME PAUSED!", 10, yPos * (count++), 30, WHITE);
-    DrawText("- Resume <Esc>", 10, yPos * (count++), 25, WHITE);
-    DrawText("- Restart <R>", 10, yPos * (count++), 25, WHITE);
-    DrawText("- Quit <Q>", 10, yPos * (count++), 25, WHITE);
 
-    Button restartButton = { 
-        .text = "Restart <R>", 
+    Button resumeButton = {
+        .text = "Resume <Esc>",
         .position = (Vector2) { 10.0f, (float)(yPos * (count++)) }, 
-        .size = (Vector2) { 100, 40 }, 
-        .fontSize = 25, 
+        .size = (Vector2) { 260, 40 }, 
         .fgColor = WHITE, 
         .bgColor = GRAY, 
         .borderColor = WHITE 
     };
+
+    Button restartButton = { 
+        .text = "Restart <R>", 
+        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) }, 
+        .size = (Vector2) { 260, 40 }, 
+        .fgColor = WHITE, 
+        .bgColor = GRAY, 
+        .borderColor = WHITE 
+    };
+
+    Button quitButton = { 
+        .text = "Quit <Q>", 
+        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) }, 
+        .size = (Vector2) { 260, 40 }, 
+        .fgColor = WHITE, 
+        .bgColor = GRAY, 
+        .borderColor = WHITE 
+    };
+
+    DrawButton(resumeButton);
     DrawButton(restartButton);
+    DrawButton(quitButton);
 
     // let pause screen load so as to not overlap ESCAPE key pressed to open pause screen
     if (this->pauseScreenLoaded) {
-        if (IsKeyReleased(KEY_ESCAPE)) {
+        if (IsButtonClicked(resumeButton) || IsKeyReleased(KEY_ESCAPE)) {
             this->gameState = GAME;
         } else if (IsButtonClicked(restartButton) || IsKeyPressed(KEY_R)) {
             this->gameState = GAME;
             this->ParseMap(this);
-        } else if (IsKeyPressed(KEY_Q)) {
+        } else if (IsButtonClicked(quitButton) || IsKeyPressed(KEY_Q)) {
             glfwSetWindowShouldClose(GetWindowHandle(), 1);
         }
     }
@@ -224,13 +241,32 @@ void UpdateEndScreen(Application* const this) {
     const int yPos = 50;
     int count = 1;
     DrawText("LEVEL COMPLETED!", 10, yPos * (count++), 30, WHITE);
-    DrawText("- Restart <R>", 10, yPos * (count++), 25, WHITE);
-    DrawText("- Quit <Q>", 10, yPos * (count++), 25, WHITE);
 
-    if (IsKeyPressed(KEY_R)) {
+    Button restartButton = { 
+        .text = "Restart <R>", 
+        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) }, 
+        .size = (Vector2) { 260, 40 }, 
+        .fgColor = WHITE, 
+        .bgColor = GRAY, 
+        .borderColor = WHITE 
+    };
+
+    Button quitButton = { 
+        .text = "Quit <Q>", 
+        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) }, 
+        .size = (Vector2) { 260, 40 }, 
+        .fgColor = WHITE, 
+        .bgColor = GRAY, 
+        .borderColor = WHITE 
+    };
+
+    DrawButton(restartButton);
+    DrawButton(quitButton);
+
+    if (IsButtonClicked(restartButton) || IsKeyPressed(KEY_R)) {
         this->gameState = GAME;
         this->ParseMap(this);
-    } else if (IsKeyPressed(KEY_Q)) {
+    } else if (IsButtonClicked(quitButton) || IsKeyPressed(KEY_Q)) {
         glfwSetWindowShouldClose(GetWindowHandle(), 1);
     }
 }

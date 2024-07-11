@@ -20,7 +20,6 @@ typedef struct Button {
     const char* text;
     Vector2 position;
     Vector2 size;
-    int fontSize;
     Color fgColor;
     Color bgColor;
     Color borderColor;
