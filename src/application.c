@@ -96,6 +96,8 @@ void UpdateOverlay(Application* const this) {
             this->UpdateEndScreen(this);
             break;
     }
+
+    DrawFPS(10, 10);
 }
 
 void UpdateGame(Application* const this) {
@@ -178,7 +180,7 @@ void UpdateGame(Application* const this) {
         this->gameState = END;
     }
 
-    if (IsKeyReleased(KEY_ESCAPE)) {
+    if (IsKeyPressed(KEY_ESCAPE)) {
         this->pauseScreenLoaded = false;
         this->gameState = PAUSE;
     }
@@ -223,7 +225,7 @@ void UpdatePauseScreen(Application* const this) {
 
     // let pause screen load so as to not overlap ESCAPE key pressed to open pause screen
     if (this->pauseScreenLoaded) {
-        if (IsButtonClicked(resumeButton) || IsKeyReleased(KEY_ESCAPE)) {
+        if (IsButtonClicked(resumeButton) || IsKeyPressed(KEY_ESCAPE)) {
             this->gameState = GAME;
         } else if (IsButtonClicked(restartButton) || IsKeyPressed(KEY_R)) {
             this->gameState = GAME;

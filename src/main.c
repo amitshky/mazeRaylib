@@ -6,12 +6,13 @@
 #include "utils.h"
 #include "application.h"
 
-    // TODO: hot reloading
-    // TODO: draw ui settings (mouse sensitivity, movement speed)
-    // TODO: map at the top left corner
-    // TODO: swtich/pick levels
-    // TODO: enemies shoot at you
-
+// TODO: hot reloading
+// TODO: draw ui settings (mouse sensitivity, movement speed)
+// TODO: map at the top left corner
+// TODO: swtich/pick levels
+// TODO: enemies shoot at you
+// TODO: toggle active camera only in debug build
+// TODO: toggle key for showing or hiding mouse cursor in debug build
 int main(void) {
     Config config = {
         .width = 640,
@@ -40,7 +41,6 @@ int main(void) {
         EndMode3D();
 
         app.UpdateOverlay(&app);
-        DrawFPS(10, 10);
         EndDrawing();
     }
 
