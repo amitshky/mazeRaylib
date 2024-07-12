@@ -17,6 +17,7 @@ void Init(Application* const this, const Config config) {
     this->config = config;
     this->gameState = GAME;
     this->pauseScreenLoaded = false;
+    this->isCursorVisibilityToggled = false;
 
     this->mapLayout = NULL;
     this->entities = NULL;
@@ -60,7 +61,7 @@ void Cleanup(Application* const this) {
 void Update(Application* const this) {
     switch (this->gameState) {
         case GAME:
-            if (this->activeCamera == PLAYER_CAMERA && !IsCursorHidden()) {
+            if (this->activeCamera == PLAYER_CAMERA && !this->isCursorVisibilityToggled  && !IsCursorHidden()) {
                 HideCursor();
                 DisableCursor();
             }
@@ -110,6 +111,10 @@ void UpdateGame(Application* const this) {
     // switch camera on `tab` key press
     if (IsKeyPressed(KEY_TAB)) {
         this->ToggleActiveCamera(this);
+    } else if (IsKeyPressed(KEY_GRAVE)) { // ` key
+        // so that i can make the cursor visible when i want to debug
+        ToggleCursorVisibility();
+        this->isCursorVisibilityToggled = !this->isCursorVisibilityToggled;
     }
 #endif
 
@@ -118,17 +123,19 @@ void UpdateGame(Application* const this) {
         .position = this->player.position,
     };
 
+#ifdef _DEBUG
     switch (this->activeCamera) {
         case PLAYER_CAMERA:
             MovePlayer(&this->player);
             break;
 
-#ifdef _DEBUG
         case SCENE_CAMERA:
             this->ControlCamera(this->camera);
             break;
-#endif
     }
+#elif defined _RELEASE
+    MovePlayer(&this->player);
+#endif
 
     // press left mouse button to shoot
     if (this->activeCamera == PLAYER_CAMERA && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
@@ -200,6 +207,8 @@ void UpdateGame(Application* const this) {
     }
 }
 
+// FIXME: moving mouse to any of the buttons then going back to game and again
+// opening the menu, highlights the button again
 void UpdatePauseScreen(Application* const this) {
     ClearBackground(MENU_BG_COLOR);
     const int yPos = 50;

@@ -49,6 +49,7 @@ typedef struct Application {
     Camera3D sceneCamera;
 
     bool pauseScreenLoaded; // to prevent keypresses from overlapping
+    bool isCursorVisibilityToggled; // to be used with `ToggleCursorVisibility()`
     Config config;
 
     // initialized in `LoadMap` function

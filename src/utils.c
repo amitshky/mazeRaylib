@@ -1,6 +1,16 @@
 #include "utils.h"
 #include <stdio.h>
 
+void ToggleCursorVisibility() {
+    if (IsCursorHidden()) {
+        ShowCursor();
+        EnableCursor();
+    } else {
+        HideCursor();
+        DisableCursor();
+    }
+}
+
 void DrawGuides(void) {
     const float bounds = 1000.0f;
     DrawLine3D((Vector3){ 0.0f, -bounds, 0.0f }, (Vector3){ 0.0f, bounds, 0.0f }, GREEN);
