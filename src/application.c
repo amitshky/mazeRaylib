@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <float.h>
 #include <math.h>
 #include <GLFW/glfw3.h>
 #include "rcamera.h"
@@ -139,37 +138,7 @@ void UpdateGame(Application* const this) {
 
     // press left mouse button to shoot
     if (this->activeCamera == PLAYER_CAMERA && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        float minDistance = FLT_MAX; // to hit the closest enemy
-        Entity* pEntity = NULL;
-        uint64_t entityIdx = 0; // index of the entity hit
-
-        Ray ray = {
-            .position = this->player.position,
-            .direction = GetCameraForward(&this->player.camera),
-        };
-
-        for (uint64_t i = 0; i < this->numEntities; ++i) {
-            RayCollision hitInfo = GetRayCollisionBox(ray, this->entities[i].hitbox);
-            if (hitInfo.hit && hitInfo.distance <= minDistance) {
-                minDistance = hitInfo.distance;
-                pEntity = &this->entities[i];
-                entityIdx = i;
-            }
-        }
-
-        if (minDistance != FLT_MAX && pEntity->type == ENTITY_ENEMY) {
-            pEntity->enemy.health -= this->player.damageVal;
-            // remove the dead enemies
-            if (pEntity->enemy.health <= 0.0f) {
-                for (uint64_t i = entityIdx; i < this->numEntities; ++i) {
-                    if (i + 1 < this->numEntities) {
-                        this->entities[i] = this->entities[i + 1];
-                    }
-                }
-                --this->numEnemies;
-                --this->numEntities;
-            }
-        }
+        PlayerShoot(&this->player, this->entities, &this->numEntities, &this->numEnemies);
     }
 
     // render entities and check player collision
@@ -183,11 +152,12 @@ void UpdateGame(Application* const this) {
 #ifdef _DEBUG
         if (this->activeCamera == SCENE_CAMERA) {
             DrawBoundingBox(this->entities[i].hitbox, GREEN);
-        }
-#endif
-        if (this->activeCamera == PLAYER_CAMERA) {
+        } else if (this->activeCamera == PLAYER_CAMERA) {
             DrawCubeWiresV(this->entities[i].position, this->entities[i].size, BLUE);
         }
+#elif defined _RELEASE
+        DrawCubeWiresV(this->entities[i].position, this->entities[i].size, BLUE);
+#endif
     }
 
 #ifdef _DEBUG

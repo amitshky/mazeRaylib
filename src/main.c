@@ -7,7 +7,6 @@
 #include "application.h"
 
 // TODO: enemies shoot at you
-// TODO: hot reloading
 // TODO: settings ui (mouse sensitivity, movement speed)
 // TODO: map at the top left corner
 int main(void) {
@@ -15,7 +14,7 @@ int main(void) {
         .width = 640,
         .height = 640,
         .title = "Maze",
-        .mapPath = "assets/map/box.txt",
+        .mapPath = "assets/map/map1.txt",
         .fovy = 45.0f,
     };
 

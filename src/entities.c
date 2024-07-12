@@ -1,4 +1,5 @@
 #include "entities.h"
+#include <float.h>
 #include "raymath.h"
 #include "rcamera.h"
 
@@ -90,6 +91,35 @@ void PlayerOnCollision(Player* const player, const CollisionState* const state) 
     player->camera.position = player->position;
 }
 
+void PlayerShoot(Player* const player, Entity* const entities, uint64_t* const numEntities, uint64_t* const numEnemies) {
+    float minDistance = FLT_MAX; // to hit the closest enemy
+    Entity* pEntity = NULL;
+    uint64_t entityIdx = 0; // index of the entity hit
+
+    Ray ray = {
+        .position = player->position,
+        .direction = GetCameraForward(&player->camera),
+    };
+
+    for (uint64_t i = 0; i < (*numEntities); ++i) {
+        RayCollision hitInfo = GetRayCollisionBox(ray, entities[i].hitbox);
+        if (hitInfo.hit && hitInfo.distance <= minDistance) {
+            minDistance = hitInfo.distance;
+            pEntity = &entities[i];
+            entityIdx = i;
+        }
+    }
+
+    if (minDistance != FLT_MAX && pEntity->type == ENTITY_ENEMY) {
+        pEntity->enemy.health -= player->damageVal;
+        // remove the dead enemies
+        if (pEntity->enemy.health <= 0.0f) {
+            RemoveEntityElementAt(entities, numEntities, entityIdx);
+            --(*numEnemies);
+        }
+    }
+}
+
 Entity InitWall(const Vector3 position) {
     Entity e = (Entity) {
         .type     = ENTITY_WALL,
@@ -118,4 +148,13 @@ Entity InitEnemy(const Vector3 position, const float health) {
     e.hitbox = CreateHitbox(e.position, e.size, e.hitboxPadding);
 
     return e;
+}
+
+void RemoveEntityElementAt(Entity* const entities, uint64_t* const num, uint64_t index) {
+    for (uint64_t i = index; i < (*num); ++i) {
+        if (i + 1 < (*num)) {
+            entities[i] = entities[i + 1];
+        }
+    }
+    (*num) -= 1;
 }

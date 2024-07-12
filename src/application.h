@@ -79,6 +79,8 @@ void UpdateGame(Application* const this);
 void UpdatePauseScreen(Application* const this);
 void UpdateEndScreen(Application* const this);
 
+void Shoot(struct Application* const this);
+
 // only add these in debug builds
 #ifdef _DEBUG
 #define CREATE_APPLICATION_DEBUG_EXT \

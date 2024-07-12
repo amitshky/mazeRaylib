@@ -1,5 +1,7 @@
 #pragma once
 
+#include <stdint.h>
+#include <stdlib.h>
 #include "raylib.h"
 #include "types.h"
 
@@ -50,6 +52,9 @@ BoundingBox CreateHitbox(const Vector3 position, const Vector3 size, const Vecto
 Player InitPlayer(const Vector3 position, const float fovy, const char playerDirectionChar);
 void MovePlayer(Player* const player);
 void PlayerOnCollision(Player* const player, const CollisionState* const state);
+void PlayerShoot(Player* const player, Entity* const entities, uint64_t* const numEntities, uint64_t* const numEnemies);
 
 Entity InitWall(const Vector3 position);
 Entity InitEnemy(const Vector3 position, const float health);
+
+void RemoveEntityElementAt(Entity* const entities, uint64_t* const num, uint64_t index); // remove entity from a array of entities
