@@ -35,9 +35,14 @@ void Init(Application* const this, const Config config) {
         .projection = CAMERA_PERSPECTIVE,
     };
 
+#ifdef _DEBUG
     // this will be toggled to PLAYER_CAMERA
     this->activeCamera = SCENE_CAMERA;
     this->ToggleActiveCamera(this);
+#elif defined _RELEASE
+    this->activeCamera = PLAYER_CAMERA;
+    this->camera = &this->player.camera;
+#endif
 }
 
 void Cleanup(Application* const this) {
@@ -55,7 +60,7 @@ void Cleanup(Application* const this) {
 void Update(Application* const this) {
     switch (this->gameState) {
         case GAME:
-            if (!IsCursorHidden()) {
+            if (this->activeCamera == PLAYER_CAMERA && !IsCursorHidden()) {
                 HideCursor();
                 DisableCursor();
             }
@@ -101,10 +106,12 @@ void UpdateOverlay(Application* const this) {
 }
 
 void UpdateGame(Application* const this) {
+#ifdef _DEBUG
     // switch camera on `tab` key press
     if (IsKeyPressed(KEY_TAB)) {
         this->ToggleActiveCamera(this);
     }
+#endif
 
     // set state before collision
     CollisionState state = {
@@ -116,9 +123,11 @@ void UpdateGame(Application* const this) {
             MovePlayer(&this->player);
             break;
 
+#ifdef _DEBUG
         case SCENE_CAMERA:
             this->ControlCamera(this->camera);
             break;
+#endif
     }
 
     // press left mouse button to shoot
@@ -164,17 +173,22 @@ void UpdateGame(Application* const this) {
         }
 
         DrawCubeV(this->entities[i].position, this->entities[i].size, this->entities[i].color);
+#ifdef _DEBUG
         if (this->activeCamera == SCENE_CAMERA) {
             DrawBoundingBox(this->entities[i].hitbox, GREEN);
-        } else if (this->activeCamera == PLAYER_CAMERA) {
+        }
+#endif
+        if (this->activeCamera == PLAYER_CAMERA) {
             DrawCubeWiresV(this->entities[i].position, this->entities[i].size, BLUE);
         }
     }
 
+#ifdef _DEBUG
     if (this->activeCamera == SCENE_CAMERA) {
         DrawCubeV(this->player.position, this->player.size, this->player.color);
         DrawBoundingBox(this->player.hitbox, GREEN);
     }
+#endif
 
     if (this->numEnemies == 0) {
         this->gameState = END;
@@ -194,29 +208,29 @@ void UpdatePauseScreen(Application* const this) {
 
     Button resumeButton = {
         .text = "Resume <Esc>",
-        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) }, 
-        .size = (Vector2) { 260, 40 }, 
-        .fgColor = WHITE, 
-        .bgColor = GRAY, 
-        .borderColor = WHITE 
+        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) },
+        .size = (Vector2) { 260, 40 },
+        .fgColor = WHITE,
+        .bgColor = GRAY,
+        .borderColor = WHITE
     };
 
-    Button restartButton = { 
-        .text = "Restart <R>", 
-        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) }, 
-        .size = (Vector2) { 260, 40 }, 
-        .fgColor = WHITE, 
-        .bgColor = GRAY, 
-        .borderColor = WHITE 
+    Button restartButton = {
+        .text = "Restart <R>",
+        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) },
+        .size = (Vector2) { 260, 40 },
+        .fgColor = WHITE,
+        .bgColor = GRAY,
+        .borderColor = WHITE
     };
 
-    Button quitButton = { 
-        .text = "Quit <Q>", 
-        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) }, 
-        .size = (Vector2) { 260, 40 }, 
-        .fgColor = WHITE, 
-        .bgColor = GRAY, 
-        .borderColor = WHITE 
+    Button quitButton = {
+        .text = "Quit <Q>",
+        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) },
+        .size = (Vector2) { 260, 40 },
+        .fgColor = WHITE,
+        .bgColor = GRAY,
+        .borderColor = WHITE
     };
 
     DrawButton(resumeButton);
@@ -244,22 +258,22 @@ void UpdateEndScreen(Application* const this) {
     int count = 1;
     DrawText("LEVEL COMPLETED!", 10, yPos * (count++), 30, WHITE);
 
-    Button restartButton = { 
-        .text = "Restart <R>", 
-        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) }, 
-        .size = (Vector2) { 260, 40 }, 
-        .fgColor = WHITE, 
-        .bgColor = GRAY, 
-        .borderColor = WHITE 
+    Button restartButton = {
+        .text = "Restart <R>",
+        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) },
+        .size = (Vector2) { 260, 40 },
+        .fgColor = WHITE,
+        .bgColor = GRAY,
+        .borderColor = WHITE
     };
 
-    Button quitButton = { 
-        .text = "Quit <Q>", 
-        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) }, 
-        .size = (Vector2) { 260, 40 }, 
-        .fgColor = WHITE, 
-        .bgColor = GRAY, 
-        .borderColor = WHITE 
+    Button quitButton = {
+        .text = "Quit <Q>",
+        .position = (Vector2) { 10.0f, (float)(yPos * (count++)) },
+        .size = (Vector2) { 260, 40 },
+        .fgColor = WHITE,
+        .bgColor = GRAY,
+        .borderColor = WHITE
     };
 
     DrawButton(restartButton);
@@ -346,6 +360,7 @@ void ParseMap(Application* const this) {
     }
 }
 
+#ifdef _DEBUG
 void ControlCamera(Camera3D* const camera) {
     // press and hold the right mouse button or middle to move the camera
     if (IsMouseButtonPressed(MOUSE_BUTTON_RIGHT) || IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) {
@@ -367,15 +382,16 @@ void ToggleActiveCamera(Application* const this) {
         case PLAYER_CAMERA:
             this->camera = &this->sceneCamera;
             this->activeCamera = SCENE_CAMERA;
-            ShowCursor();
-            EnableCursor();
+            if (IsCursorHidden()) {
+                ShowCursor();
+                EnableCursor();
+            }
             break;
 
         case SCENE_CAMERA:
             this->camera = &this->player.camera;
             this->activeCamera = PLAYER_CAMERA;
-            HideCursor();
-            DisableCursor();
             break;
     }
 }
+#endif

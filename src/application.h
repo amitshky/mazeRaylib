@@ -18,7 +18,9 @@ typedef enum GameState {
 
 typedef enum ActiveCamera {
     PLAYER_CAMERA,
+#ifdef _DEBUG
     SCENE_CAMERA,
+#endif
 } ActiveCamera;
 
 typedef struct Application {
@@ -30,8 +32,11 @@ typedef struct Application {
 
     void (*LoadMap)(struct Application* const this);
     void (*ParseMap)(struct Application* const this);
+
+#ifdef _DEBUG
     void (*ControlCamera)(Camera3D* const camera);
     void (*ToggleActiveCamera)(struct Application* const this);
+#endif
 
     void (*UpdateGame)(struct Application* const this); // game loop
     void (*UpdatePauseScreen)(struct Application* const this); // pause/start screen
@@ -63,12 +68,24 @@ void UpdateOverlay(Application* const this);
 
 void LoadMap(Application* const this);
 void ParseMap(Application* const this);
+
+#ifdef _DEBUG
 void ControlCamera(Camera3D* const camera);
 void ToggleActiveCamera(Application* const this);
+#endif
 
 void UpdateGame(Application* const this);
 void UpdatePauseScreen(Application* const this);
 void UpdateEndScreen(Application* const this);
+
+// only add these in debug builds
+#ifdef _DEBUG
+#define CREATE_APPLICATION_DEBUG_EXT \
+    .ControlCamera = ControlCamera, \
+    .ToggleActiveCamera = ToggleActiveCamera,
+#elif defined _RELEASE
+#define CREATE_APPLICATION_DEBUG_EXT
+#endif
 
 #define CREATE_APPLICATION() (Application) { \
     .Init = Init, \
@@ -77,10 +94,8 @@ void UpdateEndScreen(Application* const this);
     .UpdateOverlay = UpdateOverlay, \
     .LoadMap = LoadMap, \
     .ParseMap = ParseMap, \
-    .ControlCamera = ControlCamera, \
-    .ToggleActiveCamera = ToggleActiveCamera, \
     .UpdateGame = UpdateGame, \
     .UpdatePauseScreen = UpdatePauseScreen, \
     .UpdateEndScreen = UpdateEndScreen, \
+    CREATE_APPLICATION_DEBUG_EXT \
 }
-
