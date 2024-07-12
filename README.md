@@ -2,12 +2,14 @@
 Just trying out raylib in C. Run around in the maze to shoot enemies.
 
 ## Configure
+NOTE: for linux
 - First build raylib
 ```
 source ./build-raylib.sh
 ```
 
 ## Build and Run
+NOTE: for linux
 - Debug build
 ```
 source ./build.sh
