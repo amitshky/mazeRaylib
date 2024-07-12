@@ -11,7 +11,6 @@
 // TODO: map at the top left corner
 // TODO: swtich/pick levels
 // TODO: enemies shoot at you
-// TODO: toggle active camera only in debug build
 // TODO: toggle key for showing or hiding mouse cursor in debug build
 int main(void) {
     Config config = {

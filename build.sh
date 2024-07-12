@@ -38,9 +38,10 @@ LINK_LIB="\
 
 WARNING_FLAGS="-Wall -Wextra -Wconversion -Werror"
 CFLAGS="-std=c17 -O0 -ggdb -fsanitize=address -fno-omit-frame-pointer"
+MACROS="-D_DEBUG"
 
 echo "Compiling..."
 
-gcc $SRC_FILES -o $EXEC_FILE $INCLUDE_DIR $LINK_DIR $LINK_LIB $WARNING_FLAGS $CFLAGS
+gcc $SRC_FILES -o $EXEC_FILE $INCLUDE_DIR $LINK_DIR $LINK_LIB $WARNING_FLAGS $CFLAGS $MACROS
 
 echo "Compiled to "$EXEC_FILE 
