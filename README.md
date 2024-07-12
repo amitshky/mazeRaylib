@@ -1,9 +1,13 @@
 # mazeRaylib
-Just trying out raylib in C. Run around in the maze to shoot enemies.
+Run around in the maze to shoot enemies. I am just trying out [raylib](https://www.raylib.com/) in C. 
+
+## Prerequisites
+- [gcc](https://gcc.gnu.org/)
 
 ## Configure
 NOTE: for linux
-- First build raylib
+- First get raylib and build it
+- This will add raylib as a submodule and build it
 ```
 source ./build-raylib.sh
 ```
