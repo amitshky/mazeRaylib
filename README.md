@@ -35,9 +35,19 @@ source ./build-rel.sh
     - Hold right mouse button and move mouse to look around
     - Hold middle mouse button to orbit the camera around y-axis
 
-## Map file
-(`assets/map/`)
+## Map file details
+(path: `assets/map/`)
 - `#` - walls
 - `e` - enemy
 - `<, >, v, ^` - player (each character specifies the direction the player is facing)
 - `.` - empty space
+
+## Screenshots
+- Game
+<img src="img/game.png">
+
+- Scene camera (only in debug builds)
+<img src="img/maze.png">
+
+- Pause menu
+<img src="img/pause-menu.png">
