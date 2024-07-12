@@ -40,4 +40,4 @@ source ./build-rel.sh
 - `#` - walls
 - `e` - enemy
 - `<, >, v, ^` - player (each character specifies the direction the player is facing)
-- `.` empty space
+- `.` - empty space
