@@ -75,8 +75,8 @@ void Update(Application* const this) {
             break;
     }
 
-    // exit on Left CTRL+Q
-    if (IsKeyDown(KEY_LEFT_CONTROL) && IsKeyPressed(KEY_Q)) {
+    // exit on CTRL+Q
+    if ((IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL)) && IsKeyPressed(KEY_Q)) {
         glfwSetWindowShouldClose(GetWindowHandle(), 1);
     }
 }
